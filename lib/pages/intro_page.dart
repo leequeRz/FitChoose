@@ -37,7 +37,7 @@ class _IntroPageState extends State<IntroPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'lib/images/icon.png',
+              'assets/images/icon.png',
             ),
             Text('FitChoose',
                 style: TextStyle(

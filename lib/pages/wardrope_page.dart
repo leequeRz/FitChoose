@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fitchoose/pages/wardrope_dress.dart';
+import 'package:fitchoose/pages/wardrope_lower.dart';
+import 'package:fitchoose/pages/wardrope_upper.dart';
 
 class WardropePage extends StatelessWidget {
   const WardropePage({super.key});
@@ -33,18 +36,24 @@ class WardropePage extends StatelessWidget {
                 child: ListView(
                   children: [
                     _buildCategoryCard(
+                      context: context,
+                      destination: const WardropeUpper(),
                       icon: Icons.accessibility_new,
                       title: 'Upper-Body',
                       itemCount: 6,
                     ),
                     const SizedBox(height: 16),
                     _buildCategoryCard(
+                      context: context,
+                      destination: const WardropeLower(),
                       icon: Icons.accessibility,
                       title: 'Lower-Body',
                       itemCount: 6,
                     ),
                     const SizedBox(height: 16),
                     _buildCategoryCard(
+                      context: context,
+                      destination: const WardropeDress(),
                       icon: Icons.accessibility_outlined,
                       title: 'Dress',
                       itemCount: 6,
@@ -86,48 +95,58 @@ class WardropePage extends StatelessWidget {
   }
 
   Widget _buildCategoryCard({
+    required BuildContext context,
+    required Widget destination,
     required IconData icon,
     required String title,
     required int itemCount,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.7),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            size: 40,
-            color: const Color(0xFF3B1E54),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF3B1E54),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => destination),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '$itemCount items',
-            style: const TextStyle(
-              fontSize: 16,
-              color: Color(0xFF9B7EBD),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 40,
+              color: const Color(0xFF3B1E54),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF3B1E54),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$itemCount items',
+              style: const TextStyle(
+                fontSize: 16,
+                color: Color(0xFF9B7EBD),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

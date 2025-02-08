@@ -31,20 +31,6 @@ class _HomePageState extends State<HomePage> {
     ];
 
     return Scaffold(
-      // appBar: AppBar(
-      //   toolbarHeight: 80,
-      //   title: Padding(
-      //     padding: const EdgeInsets.only(left: 12.0),
-      //     child: Text(
-      //       'Welcome',
-      //       style: TextStyle(
-      //         fontSize: 36,
-      //         fontWeight: FontWeight.bold,
-      //         color: Color(0xFF3B1E54),
-      //       ),
-      //     ),
-      //   ),
-      // ),
       bottomNavigationBar: BottomNavBar(
         onTabChange: (index) => navigateBottomBar(index),
       ),
