@@ -1,4 +1,5 @@
 import 'package:fitchoose/components/bottom_navigation.dart';
+import 'package:fitchoose/pages/matching_page.dart';
 import 'package:fitchoose/pages/virtual_tryon.dart';
 import 'package:fitchoose/pages/wardrope_page.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +29,7 @@ class _HomePageState extends State<HomePage> {
     final List<Widget> _pages = [
       const WardropePage(),
       const VirtualTryOnPage(),
+      const MatchingPage(),
     ];
 
     return Scaffold(
@@ -39,6 +41,7 @@ class _HomePageState extends State<HomePage> {
         children: const [
           WardropePage(),
           VirtualTryOnPage(),
+          MatchingPage(),
           // body: SafeArea(
           //   child: SingleChildScrollView(
           //     physics: const BouncingScrollPhysics(),
