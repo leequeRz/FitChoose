@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class MatchingPictureSelect extends StatelessWidget {
+class PictureSelect extends StatelessWidget {
   final String imageUrl;
   final double? width;
   final double? height;
 
-  const MatchingPictureSelect({
+  const PictureSelect({
     Key? key,
     required this.imageUrl,
     this.width,

@@ -1,5 +1,5 @@
 import 'package:fitchoose/components/container_matchingresult.dart';
-import 'package:fitchoose/components/matchingresult_pictureselect.dart';
+import 'package:fitchoose/components/pictureselect.dart';
 import 'package:fitchoose/components/matchingresult_picturesuggest.dart';
 import 'package:flutter/material.dart';
 
@@ -59,7 +59,7 @@ class _MatchingResultState extends State<MatchingResult> {
                   ),
                   SizedBox(height: 36),
                   Center(
-                    child: MatchingPictureSelect(
+                    child: PictureSelect(
                       imageUrl: 'assets/images/test.png',
                       width: 160,
                       height: 160,
