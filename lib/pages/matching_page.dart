@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:fitchoose/pages/favorites_page.dart';
 import 'package:fitchoose/pages/matching_result.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -27,29 +27,63 @@ class _MatchingPageState extends State<MatchingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F0FF), // Light purple background
+      backgroundColor: const Color(0xFFF5F0FF),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Matching +',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF3B1E54), // Deep purple
-                ),
+              // Header row with title and heart button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Matching +',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF3B1E54),
+                        ),
+                      ),
+                      Text(
+                        'Matching Your Outfits',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Color(0xFF9B7EBD),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Heart button
+                  GestureDetector(
+                    onTap: () {
+                      // Add navigation to favorites page here
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => FavoritesPage()));
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF9B7EBD).withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.favorite_rounded,
+                        color: Color(0xFF9B7EBD),
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const Text(
-                'Matching Your Outfits',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Color(0xFF9B7EBD), // Medium purple
-                ),
-              ),
-              SizedBox(height: 36),
+              const SizedBox(height: 36),
+              // Rest of the content remains the same
               GestureDetector(
                 onTap: pickImage,
                 child: Center(
@@ -57,13 +91,13 @@ class _MatchingPageState extends State<MatchingPage> {
                     width: 230,
                     height: 190,
                     decoration: BoxDecoration(
-                      color: Color(0xFFD4BEE4),
+                      color: const Color(0xFFD4BEE4),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: _image == null
                         ? Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
+                            children: const [
                               Text(
                                 'Select Your',
                                 style: TextStyle(
@@ -93,8 +127,8 @@ class _MatchingPageState extends State<MatchingPage> {
                 ),
               ),
               const SizedBox(height: 24),
-              Center(
-                child: const Text('OR',
+              const Center(
+                child: Text('OR',
                     style: TextStyle(
                         color: Colors.black,
                         fontSize: 20,
@@ -108,13 +142,13 @@ class _MatchingPageState extends State<MatchingPage> {
                     width: 230,
                     height: 190,
                     decoration: BoxDecoration(
-                      color: Color(0xFFD4BEE4),
+                      color: const Color(0xFFD4BEE4),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: _image == null
                         ? Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
+                            children: const [
                               Text(
                                 'Select Your',
                                 style: TextStyle(
@@ -153,7 +187,7 @@ class _MatchingPageState extends State<MatchingPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MatchingResult(),
+                          builder: (context) => const MatchingResult(),
                         ),
                       );
                     },
