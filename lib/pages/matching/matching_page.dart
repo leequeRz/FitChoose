@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'package:fitchoose/pages/favorites_page.dart';
-import 'package:fitchoose/pages/matching_result.dart';
+import 'package:fitchoose/pages/matching/favorites_page.dart';
+import 'package:fitchoose/pages/matching/matching_result.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 

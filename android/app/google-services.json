@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "77950889635",
+    "project_id": "fitchoose-14573",
+    "storage_bucket": "fitchoose-14573.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:77950889635:android:cfec1bc69ce7435dfc9916",
+        "android_client_info": {
+          "package_name": "com.example.fitchoose"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDqDyZJggPKV7qE-PR3TweOjPMLzc-eZ-0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class CustomInputField extends StatelessWidget {
   final String label;
-  final TextEditingController? controller;
+  final TextEditingController? textController;
   final String? Function(String?)? validator;
   final bool obscureText;
   final TextInputType keyboardType;
@@ -11,7 +11,7 @@ class CustomInputField extends StatelessWidget {
   const CustomInputField({
     Key? key,
     required this.label,
-    this.controller,
+    this.textController,
     this.validator,
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
@@ -40,7 +40,7 @@ class CustomInputField extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           TextFormField(
-            controller: controller,
+            controller: textController,
             validator: validator,
             obscureText: obscureText,
             keyboardType: keyboardType,

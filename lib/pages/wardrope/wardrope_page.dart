@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fitchoose/pages/wardrope_dress.dart';
-import 'package:fitchoose/pages/wardrope_lower.dart';
-import 'package:fitchoose/pages/wardrope_upper.dart';
+import 'package:fitchoose/pages/wardrope/wardrope_dress.dart';
+import 'package:fitchoose/pages/wardrope/wardrope_lower.dart';
+import 'package:fitchoose/pages/wardrope/wardrope_upper.dart';
 
 class WardropePage extends StatelessWidget {
   const WardropePage({super.key});

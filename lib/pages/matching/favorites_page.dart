@@ -1,5 +1,5 @@
 import 'package:fitchoose/components/favorite_matching.dart';
-import 'package:fitchoose/pages/favorites_history.dart';
+import 'package:fitchoose/pages/matching/favorites_history.dart';
 import 'package:flutter/material.dart';
 
 class FavoritesPage extends StatefulWidget {

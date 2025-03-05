@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitchoose/components/pictureselect.dart';
 import 'package:fitchoose/components/profilename_section.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +26,11 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  //sign user out method
+  void signUserOut() {
+    FirebaseAuth.instance.signOut();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,13 +41,22 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Profile',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF3B1E54), // Deep purple
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Profile',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF3B1E54), // Deep purple
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: signUserOut,
+                    icon: Icon(Icons.logout),
+                  )
+                ],
               ),
               const Text(
                 'Your Profile',

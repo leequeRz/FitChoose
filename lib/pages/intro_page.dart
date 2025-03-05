@@ -1,4 +1,4 @@
-import 'package:fitchoose/pages/create_profile.dart';
+import 'package:fitchoose/pages/authpage/auth_page.dart';
 import 'package:flutter/material.dart';
 
 class IntroPage extends StatefulWidget {
@@ -21,7 +21,7 @@ class _IntroPageState extends State<IntroPage> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-                builder: (context) => CreateProfile()), // เปลี่ยนเป็นหน้าถัดไป
+                builder: (context) => AuthPage()), // เปลี่ยนเป็นหน้าถัดไป
           );
         }
       });
