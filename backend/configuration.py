@@ -23,5 +23,7 @@ try:
 except Exception as e:
     print(f"Failed to connect to MongoDB: {e}")
 
-db = client.todo_db
-collection = db["todo_data"]
+# db = client.todo_db
+# collection = db["todo_data"]
+db = client.fitchoose
+user_collection = db["user_data"]

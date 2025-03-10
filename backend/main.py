@@ -1,7 +1,7 @@
 from fastapi import FastAPI, APIRouter, HTTPException
-from configuration import collection
-from database.schemas import all_tasks
-from database.models import Todo
+from configuration import user_collection
+from database.schemas import all_users, user_data
+from database.models import UserModel, UserUpdateModel
 from bson.objectid import ObjectId
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,49 +9,76 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
  
 router = APIRouter()
- 
+
 @router.get("/")
 async def home():
     return {"message": "Welcome to FastAPI"}
 
-@router.get("/tasks")
-async def get_all_todos():
-    data = collection.find({"is_deleted":False} )
-    return all_tasks(data)
- 
-@router.post("/create")
-async def create_task(new_task :Todo):
+# User Endpoints
+@router.get("/users")
+async def get_all_users():
+    """ดึงข้อมูลผู้ใช้ทั้งหมด"""
+    data = user_collection.find({"is_deleted": False})
+    return all_users(data)
+
+@router.get("/users/{user_id}")
+async def get_user(user_id: str):
+    """ดึงข้อมูลผู้ใช้ตาม ID"""
     try:
-        print(new_task)
-        resp =  collection.insert_one(dict(new_task))
-        return {"status_code":200, "id":str(resp.inserted_id)}
+        id = ObjectId(user_id)
+        user = user_collection.find_one({"_id": id, "is_deleted": False})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user_data(user)
     except Exception as e:
-        return HTTPException(status_code=500, detail=f"Some error occured {e}")
- 
-@router.put("/{task_id}")
-async def update_task(task_id:str, updated_task:Todo):
+        raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
+
+@router.post("/users/create")
+async def create_user(new_user: UserModel):
+    """สร้างผู้ใช้ใหม่"""
     try:
-        id = ObjectId(task_id)
-        exesting_doc = collection.find_one({"_id":id, "is_deleted":False})
-        if not exesting_doc:
-            return HTTPException(status_code=404, detail=f"Task does not exits")
-        updated_task.updated_at = datetime.timestamp(datetime.now())
-        resp = collection.update_one({"_id":id}, {"$set":dict(updated_task)})
-        return {"status_code":200, "message": "Task Updated Successfully"}
- 
+        user_dict = dict(new_user)
+        if "_id" in user_dict:
+            del user_dict["_id"]
+        # user_dict["created_at"] = int(datetime.timestamp(datetime.now()))
+        # user_dict["updated_at"] = user_dict["created_at"]
+        # user_dict["is_deleted"] = False
+        
+        resp = user_collection.insert_one(user_dict)
+        return {"status_code": 200, "id": str(resp.inserted_id), "message": "User created successfully"}
     except Exception as e:
-        return HTTPException(status_code=500, detail=f"Some error occured {e}")
- 
-@router.delete("/{task_id}")
-async def delete_task(task_id:str):
+        raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
+
+@router.put("/users/{user_id}")
+async def update_user(user_id: str, updated_user: UserUpdateModel):
+    """อัปเดตข้อมูลผู้ใช้"""
     try:
-        id = ObjectId(task_id)
-        exesting_doc = collection.find_one({"_id":id, "is_deleted":False})
-        if not exesting_doc:
-            return HTTPException(status_code=404, detail=f"Task does not exits")
-        resp = collection.update_one({"_id":id}, {"$set":{"is_deleted":True}})
-        return {"status_code":200, "message": "Task Deleted Successfully"}
- 
+        id = ObjectId(user_id)
+        existing_user = user_collection.find_one({"_id": id, "is_deleted": False})
+        if not existing_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # กรองเฉพาะฟิลด์ที่มีค่า
+        update_data = {k: v for k, v in dict(updated_user).items() if v is not None}
+        update_data["updated_at"] = datetime.timestamp(datetime.now())
+        
+        user_collection.update_one({"_id": id}, {"$set": update_data})
+        return {"status_code": 200, "message": "User updated successfully"}
     except Exception as e:
-        return HTTPException(status_code=500, detail=f"Some error occured {e}")
+        raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
+
+@router.delete("/users/{user_id}")
+async def delete_user(user_id: str):
+    """ลบผู้ใช้ (soft delete)"""
+    try:
+        id = ObjectId(user_id)
+        existing_user = user_collection.find_one({"_id": id, "is_deleted": False})
+        if not existing_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user_collection.update_one({"_id": id}, {"$set": {"is_deleted": True}})
+        return {"status_code": 200, "message": "User deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
+
 app.include_router(router)

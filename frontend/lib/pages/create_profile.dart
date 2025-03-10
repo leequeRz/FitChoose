@@ -2,6 +2,7 @@ import 'package:fitchoose/components/custom_inputfield.dart';
 import 'package:fitchoose/components/gender_selector.dart';
 import 'package:fitchoose/pages/home_page.dart';
 import 'package:fitchoose/services/firestore.dart';
+import 'package:fitchoose/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -20,6 +21,9 @@ class CreateProfile extends StatefulWidget {
 class _CreateProfileState extends State<CreateProfile> {
   //firestore
   final FirestoreService firestoreService = FirestoreService();
+
+  // เพิ่ม API service
+  final ApiService apiService = ApiService();
 
   // สร้างตัวแปรเก็บรูปภาพ
   File? _image;
@@ -86,65 +90,86 @@ class _CreateProfileState extends State<CreateProfile> {
     }
   }
 
-  // // ฟังก์ชันบันทึกข้อมูลลง Firebase
-  // Future<bool> saveUserData() async {
-  //   try {
-  //     setState(() {
-  //       _isLoading = true;
-  //     });
+  // เพิ่มฟังก์ชันสำหรับอัปโหลดรูปภาพและสร้างผู้ใช้ผ่าน API
+  Future<bool> createUserViaApi() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
 
-  //     // 1. ตรวจสอบว่ามีการเข้าสู่ระบบหรือไม่
-  //     final currentUser = FirebaseAuth.instance.currentUser;
-  //     if (currentUser == null) {
-  //       // ถ้ายังไม่มีผู้ใช้ คุณอาจต้องลงทะเบียนหรือเข้าสู่ระบบก่อน
-  //       // หรือใช้ anonymous login ในกรณีนี้:
-  //       await FirebaseAuth.instance.signInAnonymously();
-  //     }
+      String? imageUrl;
 
-  //     final userId = FirebaseAuth.instance.currentUser!.uid;
-  //     String? imageUrl;
+      // อัปโหลดรูปภาพไปที่ Firebase Storage (ถ้ามี)
+      if (_image != null) {
+        try {
+          final storageRef = FirebaseStorage.instance
+              .ref()
+              .child('profile_images')
+              .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
 
-  //     // 2. อัพโหลดรูปภาพไปที่ Firebase Storage (ถ้ามี)
-  //     if (_image != null) {
-  //       final storageRef = FirebaseStorage.instance
-  //           .ref()
-  //           .child('profile_images')
-  //           .child('$userId.jpg');
+          // อัปโหลดรูปภาพ
+          await storageRef.putFile(
+            _image!,
+            SettableMetadata(contentType: 'image/jpeg'),
+          );
 
-  //       // อัพโหลดรูปภาพ
-  //       final uploadTask = await storageRef.putFile(
-  //         _image!,
-  //         SettableMetadata(contentType: 'image/jpeg'),
-  //       );
+          // รับ URL ของรูปภาพ
+          imageUrl = await storageRef.getDownloadURL();
+        } catch (storageError) {
+          print('Firebase Storage error: $storageError');
+          // ถ้าเกิดข้อผิดพลาดในการอัปโหลดรูปภาพ ให้ดำเนินการต่อโดยไม่มีรูปภาพ
+          imageUrl = null;
+        }
+      }
 
-  //       // รับ URL ของรูปภาพ
-  //       imageUrl = await storageRef.getDownloadURL();
-  //     }
+      // แปลงค่า enum Gender เป็น string
+      String genderString = '';
+      if (_selectedGender == Gender.male) {
+        genderString = 'Male';
+      } else if (_selectedGender == Gender.female) {
+        genderString = 'Female';
+      } else {
+        genderString = 'Other';
+      }
 
-  //     // 3. บันทึกข้อมูลผู้ใช้ใน Firestore
-  //     await FirebaseFirestore.instance.collection('users').doc(userId).set({
-  //       'username': _usernameController.text,
-  //       'gender': _selectedGender
-  //           ?.toString()
-  //           .split('.')
-  //           .last, // แปลง enum เป็น string
-  //       'profileImage': imageUrl,
-  //       'createdAt': FieldValue.serverTimestamp(),
-  //       'updatedAt': FieldValue.serverTimestamp(),
-  //     }, SetOptions(merge: true));
+      // เรียกใช้ API สร้างผู้ใช้
+      final response = await apiService.createUser(
+        username: usernameController.text,
+        gender: genderString,
+        imageUrl: imageUrl,
+      );
 
-  //     setState(() {
-  //       _isLoading = false;
-  //     });
-  //     return true;
-  //   } catch (e) {
-  //     print('Error saving user data: $e');
-  //     setState(() {
-  //       _isLoading = false;
-  //     });
-  //     return false;
-  //   }
-  // }
+      print('API Response: $response');
+
+      // ตรวจสอบการตอบกลับจาก API
+      if (response.containsKey('id') || response.containsKey('status_code')) {
+        final userId = response['id'] ?? '';
+        print('User created with ID: $userId');
+        
+        setState(() {
+          _isLoading = false;
+        });
+        return true;
+      } else {
+        print('API response does not contain ID: $response');
+        setState(() {
+          _isLoading = false;
+        });
+        return false;
+      }
+    } catch (e) {
+      print('Error creating user: $e');
+      setState(() {
+        _isLoading = false;
+      });
+      
+      // แสดงข้อความข้อผิดพลาดที่เฉพาะเจาะจงมากขึ้น
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("เกิดข้อผิดพลาด: ${e.toString()}")),
+      );
+      return false;
+    }
+  }
 
   @override
   void dispose() {
@@ -257,28 +282,29 @@ class _CreateProfileState extends State<CreateProfile> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          // // ตรวจสอบความถูกต้องของฟอร์ม
-          // if (_formKey.currentState!.validate()) {
-          //   // ตรวจสอบว่าได้เลือกเพศหรือไม่
-          //   if (_selectedGender == null) {
-          //     ScaffoldMessenger.of(context).showSnackBar(
-          //       const SnackBar(content: Text("กรุณาเลือกเพศ")),
-          //     );
-          //     return;
-          //   }
+          // ตรวจสอบความถูกต้องของฟอร์ม
+          if (_formKey.currentState!.validate()) {
+            // ตรวจสอบว่าได้เลือกเพศหรือไม่
+            if (_selectedGender == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("กรุณาเลือกเพศ")),
+              );
+              return;
+            }
 
-          // บันทึกข้อมูล
-          bool success =
-              await firestoreService.addUser(username: usernameController.text);
-          if (success) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const HomePage()),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("เกิดข้อผิดพลาดในการบันทึกข้อมูล")),
-            );
+            // บันทึกข้อมูลผ่าน API
+            bool success = await createUserViaApi();
+            if (success) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const HomePage()),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text("เกิดข้อผิดพลาดในการบันทึกข้อมูล")),
+              );
+            }
           }
         },
         backgroundColor: Colors.white,
