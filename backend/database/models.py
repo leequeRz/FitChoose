@@ -33,6 +33,7 @@ class PyObjectId(ObjectId):
 
 class UserModel(BaseModel):
     # id: Optional[PyObjectId] = Field(default=None, alias="_id") #สามารถใช้ได้ทั้ง id และ _id
+    user_id: str
     username: str = Field(...) #(...) คือการที่ใน field ข้อมูลนั้นบังคับต้องมีค่า
     gender: str = Field(...) #(...) คือการที่ใน field ข้อมูลนั้นบังคับต้องมีค่า
     image_url: Optional[str] = None
@@ -55,6 +56,7 @@ class UserModel(BaseModel):
 
 
 class UserUpdateModel(BaseModel):
+    user_id: Optional[str] = None
     username: Optional[str] = None
     gender: Optional[str] = None
     image_url: Optional[str] = None

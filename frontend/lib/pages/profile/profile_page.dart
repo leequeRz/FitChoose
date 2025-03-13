@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitchoose/components/pictureselect.dart';
 import 'package:fitchoose/components/profilename_section.dart';
+import 'package:fitchoose/pages/loginregister/login_or_register_page.dart';
 import 'package:flutter/material.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -27,8 +28,38 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   //sign user out method
-  void signUserOut() {
-    FirebaseAuth.instance.signOut();
+  Future<void> signUserOut() async {
+    try {
+      // แสดง loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // ล็อกเอาท์จาก Firebase
+      await FirebaseAuth.instance.signOut();
+
+      // ปิด loading indicator
+      Navigator.pop(context);
+
+      // นำทางกลับไปยังหน้า IntroPage
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => LoginOrRegisterPage()),
+        (route) => false, // ลบทุก route ที่อยู่ใน stack
+      );
+    } catch (e) {
+      // ปิด loading indicator ในกรณีที่เกิดข้อผิดพลาด
+      Navigator.pop(context);
+
+      // แสดงข้อความแจ้งเตือนข้อผิดพลาด
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to sign out: ${e.toString()}')),
+      );
+      print('Error signing out: $e');
+    }
   }
 
   @override

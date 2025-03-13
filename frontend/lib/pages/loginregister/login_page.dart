@@ -3,6 +3,9 @@ import 'package:fitchoose/components/loginregis/%E0%B8%B4button_login_regis.dart
 import 'package:fitchoose/components/loginregis/login_regis_textfield.dart';
 import 'package:fitchoose/components/loginregis/square_tile.dart';
 import 'package:fitchoose/services/auth_service.dart';
+import 'package:fitchoose/services/api_service.dart'; // เพิ่ม import
+import 'package:fitchoose/pages/home_page.dart'; // เพิ่ม import
+import 'package:fitchoose/pages/create_profile.dart';
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatefulWidget {
@@ -17,6 +20,25 @@ class _LoginPageState extends State<LoginPage> {
   //text editing controllers
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final apiService = ApiService(); // เพิ่ม apiService
+
+  // เพิ่มฟังก์ชันตรวจสอบโปรไฟล์
+  Future<bool> _checkUserProfile(String userId) async {
+    try {
+      print("กำลังตรวจสอบโปรไฟล์ของผู้ใช้: $userId");
+      final response = await apiService.checkUserExists(userId);
+      print("ผลการตรวจสอบโปรไฟล์: $response");
+
+      // แปลงค่าให้เป็น boolean ที่ชัดเจน
+      bool exists = response['exists'] == true;
+      print("มีโปรไฟล์หรือไม่ (boolean): $exists");
+
+      return exists;
+    } catch (e) {
+      print('เกิดข้อผิดพลาดในการตรวจสอบโปรไฟล์: $e');
+      return false;
+    }
+  }
 
 // และในส่วนของการจัดการ error
   void signUserIn() async {
@@ -29,15 +51,44 @@ class _LoginPageState extends State<LoginPage> {
         );
       },
     );
-
     //try sign in
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      // ล็อกอินด้วย Firebase
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text,
         password: passwordController.text,
       );
       //pop the loading circle
       Navigator.pop(context);
+      // ตรวจสอบว่ามีโปรไฟล์แล้วหรือยัง
+      if (userCredential.user != null) {
+        print("ล็อกอินสำเร็จ: ${userCredential.user!.uid}");
+        final hasProfile = await _checkUserProfile(userCredential.user!.uid);
+        print("มีโปรไฟล์หรือไม่: $hasProfile");
+
+        if (!hasProfile) {
+          // ถ้ายังไม่มีโปรไฟล์ ให้นำทางไปยังหน้าสร้างโปรไฟล์
+          print("ไม่พบโปรไฟล์ กำลังนำทางไปหน้าสร้างโปรไฟล์...");
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CreateProfile(
+                userId: userCredential.user!.uid,
+                isNewUser: true,
+              ),
+            ),
+          );
+        } else {
+          // ถ้ามีโปรไฟล์แล้ว นำทางไปยังหน้าหลัก
+          print("พบโปรไฟล์แล้ว กำลังนำทางไปหน้าหลัก...");
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => HomePage()),
+            (route) => false, // ลบทุกหน้าออกจาก stack
+          );
+        }
+      }
     } on FirebaseAuthException catch (e) {
       //pop the loading circle
       Navigator.pop(context);
@@ -67,6 +118,41 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pop(context);
       print("General Error: $e");
       showErrorSnackBar('An error occurred. Please try again.');
+    }
+  }
+
+// แก้ไขฟังก์ชัน Google Sign In ด้วย
+  Future<void> _signInWithGoogle() async {
+    try {
+      final userCredential = await AuthService().signInWithGoogle();
+
+      if (userCredential != null && userCredential.user != null) {
+        // ตรวจสอบว่ามีโปรไฟล์แล้วหรือยัง
+        final hasProfile = await _checkUserProfile(userCredential.user!.uid);
+
+        if (!hasProfile) {
+          // ถ้ายังไม่มีโปรไฟล์ ให้นำทางไปยังหน้าสร้างโปรไฟล์
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CreateProfile(
+                userId: userCredential.user!.uid,
+                isNewUser: true,
+              ),
+            ),
+          );
+        } else {
+          // ถ้ามีโปรไฟล์แล้ว นำทางไปยังหน้าหลัก
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => HomePage()),
+            (route) => false,
+          );
+        }
+      }
+    } catch (e) {
+      print('Error signing in with Google: $e');
+      showErrorSnackBar('Failed to sign in with Google. Please try again.');
     }
   }
 
@@ -194,7 +280,7 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SquareTile(
-                        onTap: () => AuthService().signInWithGoogle(),
+                        onTap: () => _signInWithGoogle,
                         imagePath: 'assets/images/google.png'),
                   ],
                 ),

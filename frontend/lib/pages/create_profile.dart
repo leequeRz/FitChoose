@@ -1,27 +1,25 @@
 import 'package:fitchoose/components/custom_inputfield.dart';
 import 'package:fitchoose/components/gender_selector.dart';
 import 'package:fitchoose/pages/home_page.dart';
-import 'package:fitchoose/services/firestore.dart';
 import 'package:fitchoose/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 // เพิ่ม imports สำหรับ Firebase
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CreateProfile extends StatefulWidget {
-  const CreateProfile({super.key});
+  final String userId;
+  final bool isNewUser;
+
+  const CreateProfile(
+      {super.key, required this.userId, required this.isNewUser});
 
   @override
   State<CreateProfile> createState() => _CreateProfileState();
 }
 
 class _CreateProfileState extends State<CreateProfile> {
-  //firestore
-  final FirestoreService firestoreService = FirestoreService();
-
   // เพิ่ม API service
   final ApiService apiService = ApiService();
 
@@ -90,12 +88,45 @@ class _CreateProfileState extends State<CreateProfile> {
     }
   }
 
+  @override
+  void initState() {
+    super.initState();
+    // ถ้าไม่ใช่ผู้ใช้ใหม่ ให้ตรวจสอบว่ามีโปรไฟล์อยู่แล้วหรือไม่
+    if (!widget.isNewUser) {
+      _checkExistingProfile();
+    }
+  }
+
+  // เพิ่มฟังก์ชันตรวจสอบโปรไฟล์ที่มีอยู่
+  Future<void> _checkExistingProfile() async {
+    try {
+      // ดึงข้อมูลโปรไฟล์จาก API
+      final userProfile = await apiService.getUser(widget.userId);
+
+      // ถ้ามีโปรไฟล์อยู่แล้ว ให้นำทางไปยังหน้า HomePage
+      if (userProfile != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      }
+    } catch (e) {
+      print('Error checking profile: $e');
+      // ถ้าเกิดข้อผิดพลาด ให้แสดงหน้าสร้างโปรไฟล์ตามปกติ
+    }
+  }
+
   // เพิ่มฟังก์ชันสำหรับอัปโหลดรูปภาพและสร้างผู้ใช้ผ่าน API
+  // ในฟังก์ชัน createUserViaApi หรือฟังก์ชันที่ทำการสร้างโปรไฟล์
   Future<bool> createUserViaApi() async {
     try {
       setState(() {
         _isLoading = true;
       });
+
+      // สร้าง UUID สำหรับ user_id
+      // final uuid = Uuid();
+      // final userId = uuid.v4(); // สร้าง UUID v4 (random)
 
       String? imageUrl;
 
@@ -134,21 +165,24 @@ class _CreateProfileState extends State<CreateProfile> {
 
       // เรียกใช้ API สร้างผู้ใช้
       final response = await apiService.createUser(
+        user_id: widget.userId, // ใช้ Firebase UID ที่ส่งมาจาก widget
         username: usernameController.text,
         gender: genderString,
         imageUrl: imageUrl,
       );
 
-      print('API Response: $response');
-
-      // ตรวจสอบการตอบกลับจาก API
-      if (response.containsKey('id') || response.containsKey('status_code')) {
-        final userId = response['id'] ?? '';
-        print('User created with ID: $userId');
-        
+      if (response['status_code'] == 200) {
+        // สร้างโปรไฟล์สำเร็จ
         setState(() {
           _isLoading = false;
         });
+
+        // นำทางไปยังหน้าหลัก
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
+
         return true;
       } else {
         print('API response does not contain ID: $response');
@@ -162,7 +196,7 @@ class _CreateProfileState extends State<CreateProfile> {
       setState(() {
         _isLoading = false;
       });
-      
+
       // แสดงข้อความข้อผิดพลาดที่เฉพาะเจาะจงมากขึ้น
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("เกิดข้อผิดพลาด: ${e.toString()}")),

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitchoose/components/loginregis/%E0%B8%B4button_login_regis.dart';
 import 'package:fitchoose/components/loginregis/login_regis_textfield.dart';
 import 'package:fitchoose/components/loginregis/square_tile.dart';
+import 'package:fitchoose/pages/create_profile.dart'; // เพิ่ม import สำหรับหน้า create_profile
 import 'package:fitchoose/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
@@ -19,7 +20,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
-// sign user up method
+  // sign user up method
   void signUserUp() async {
     //show loading circle
     showDialog(
@@ -35,15 +36,34 @@ class _RegisterPageState extends State<RegisterPage> {
     try {
       //check if password is confirmed
       if (passwordController.text == confirmPasswordController.text) {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        // สร้างผู้ใช้ใหม่
+        UserCredential userCredential =
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: emailController.text,
           password: passwordController.text,
         );
+
+        // ปิด loading dialog
+        Navigator.pop(context);
+
+        // ถ้าสร้างผู้ใช้สำเร็จ ให้นำทางไปยังหน้า create_profile
+        if (userCredential.user != null) {
+          // นำทางไปยังหน้า create_profile
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CreateProfile(
+                userId: userCredential.user!.uid,
+                isNewUser: true,
+              ),
+            ),
+          );
+        }
       } else {
+        // ปิด loading dialog
+        Navigator.pop(context);
         showErrorSnackBar('Passwords don\'t match');
       }
-      //pop the loading circle
-      Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       //pop the loading circle
       Navigator.pop(context);
@@ -51,11 +71,11 @@ class _RegisterPageState extends State<RegisterPage> {
 
       // ใช้ switch case แทนเพื่อครอบคลุม error code ที่เป็นไปได้ทั้งหมด
       switch (e.code) {
-        case 'user-not-found':
-          showErrorSnackBar('Incorrect Email');
+        case 'email-already-in-use':
+          showErrorSnackBar('Email already in use');
           break;
-        case 'wrong-password':
-          showErrorSnackBar('Incorrect Password');
+        case 'weak-password':
+          showErrorSnackBar('Password is too weak');
           break;
         case 'invalid-email':
           showErrorSnackBar('Invalid Email Format');
@@ -66,7 +86,7 @@ class _RegisterPageState extends State<RegisterPage> {
         default:
           print("Technical error: ${e.code} - ${e.message}");
           showErrorSnackBar(
-              'Login Failed. Please check your Email or Password and try again.');
+              'Registration Failed. Please check your Email or Password and try again.');
           break;
       }
     } catch (e) {

@@ -81,4 +81,23 @@ async def delete_user(user_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
 
+@router.get("/users/check/{firebase_uid}")
+async def check_user_exists(firebase_uid: str):
+    """ตรวจสอบว่ามีผู้ใช้ที่มี Firebase UID นี้อยู่แล้วหรือไม่"""
+    try:
+        print(f"Checking if user exists with firebase_uid: {firebase_uid}")
+        user = user_collection.find_one({"user_id": firebase_uid, "is_deleted": False})
+        
+        if user:
+            print(f"User found: {user}")
+            # แปลง ObjectId เป็น string เพื่อให้ส่งกลับเป็น JSON ได้
+            user["_id"] = str(user["_id"])
+            return {"exists": True, "user_data": user}
+        
+        print(f"No user found with firebase_uid: {firebase_uid}")
+        return {"exists": False}
+    except Exception as e:
+        print(f"Error checking user exists: {e}")
+        raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
+
 app.include_router(router)
