@@ -27,3 +27,4 @@ except Exception as e:
 # collection = db["todo_data"]
 db = client.fitchoose
 user_collection = db["user_data"]
+garment_collection = db["garment_data"]  # เพิ่ม collection สำหรับเก็บข้อมูลเสื้อผ้า

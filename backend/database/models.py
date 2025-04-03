@@ -74,3 +74,30 @@ class UserUpdateModel(BaseModel):
             }
         }
     )
+
+# เพิ่มโมเดลสำหรับ Garment
+class Garment:
+    def __init__(self, user_id, garment_type, garment_image, garment_id=None, created_at=None):
+        self.garment_id = garment_id
+        self.user_id = user_id
+        self.garment_type = garment_type  # "upper", "lower", "dress"
+        self.garment_image = garment_image  # URL จาก Firebase Storage
+        self.created_at = created_at
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            user_id=data.get("user_id"),
+            garment_type=data.get("garment_type"),
+            garment_image=data.get("garment_image"),
+            garment_id=data.get("_id"),
+            created_at=data.get("created_at")
+        )
+
+    def to_dict(self):
+        return {
+            "user_id": self.user_id,
+            "garment_type": self.garment_type,
+            "garment_image": self.garment_image,
+            "created_at": self.created_at
+        }

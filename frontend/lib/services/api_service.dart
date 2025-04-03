@@ -150,4 +150,54 @@ class ApiService {
       throw Exception('Failed to update profile image: $e');
     }
   }
+
+// เพิ่มเมธอดสำหรับจัดการ garments ถ้ายังไม่มี
+  Future<Map<String, dynamic>> createGarment(
+      Map<String, dynamic> garmentData) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/garments/create'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(garmentData),
+      );
+
+      if (response.statusCode == 201) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to create garment: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getGarmentsByType(
+      String userId, String garmentType) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/garments/user/$userId/type/$garmentType'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((item) => item as Map<String, dynamic>).toList();
+      } else {
+        throw Exception('Failed to get garments: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<bool> deleteGarment(String garmentId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/garments/$garmentId'),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
 }
