@@ -111,4 +111,43 @@ class ApiService {
       return {'exists': false};
     }
   }
+
+  // เพิ่มฟังก์ชันอัปเดตข้อมูลผู้ใช้
+  Future<Map<String, dynamic>> updateUser(
+      String userId, Map<String, dynamic> userData) async {
+    try {
+      print('Updating user: $userId with data: $userData');
+      final response = await http.put(
+        Uri.parse('$baseUrl/users/update-by-firebase-uid/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(userData),
+      );
+
+      print('API Response Status: ${response.statusCode}');
+      print('API Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to update user: ${response.body}');
+      }
+    } catch (e) {
+      print('Error updating user: $e');
+      throw Exception('Failed to connect to server: $e');
+    }
+  }
+
+// เพิ่มฟังก์ชันอัปเดตรูปภาพโปรไฟล์
+  Future<Map<String, dynamic>> updateProfileImage(
+      String userId, String imageUrl) async {
+    try {
+      print('Updating profile image for user: $userId');
+      return await updateUser(userId, {'image_url': imageUrl});
+    } catch (e) {
+      print('Error updating profile image: $e');
+      throw Exception('Failed to update profile image: $e');
+    }
+  }
 }

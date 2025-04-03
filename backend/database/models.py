@@ -38,8 +38,8 @@ class UserModel(BaseModel):
     gender: str = Field(...) #(...) คือการที่ใน field ข้อมูลนั้นบังคับต้องมีค่า
     image_url: Optional[str] = None
     is_deleted: bool = False
-    created_at: int = int(datetime.timestamp(datetime.now()))
-    update_at: int = int(datetime.timestamp(datetime.now()))
+    created_at: str = datetime.utcnow().isoformat()
+    update_at: str = datetime.utcnow().isoformat()
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -61,7 +61,7 @@ class UserUpdateModel(BaseModel):
     gender: Optional[str] = None
     image_url: Optional[str] = None
     is_deleted: Optional[bool] = None
-    update_at: int = int(datetime.timestamp(datetime.now()))
+    update_at: str = datetime.utcnow().isoformat()
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -74,10 +74,3 @@ class UserUpdateModel(BaseModel):
             }
         }
     )
-# class Todo(BaseModel):
-#    title: str
-#    description: str
-#    is_completed: bool = False
-#    is_deleted: bool = False
-#    created_at: int = int(datetime.timestamp(datetime.now()))
-#    update_at: int = int(datetime.timestamp(datetime.now()))

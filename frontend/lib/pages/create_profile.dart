@@ -117,37 +117,76 @@ class _CreateProfileState extends State<CreateProfile> {
   }
 
   // เพิ่มฟังก์ชันสำหรับอัปโหลดรูปภาพและสร้างผู้ใช้ผ่าน API
-  // ในฟังก์ชัน createUserViaApi หรือฟังก์ชันที่ทำการสร้างโปรไฟล์
   Future<bool> createUserViaApi() async {
     try {
+      // ตรวจสอบว่าได้กรอกชื่อผู้ใช้หรือไม่
+      if (usernameController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("กรุณากรอกชื่อผู้ใช้")),
+        );
+        return false;
+      }
+
+      // ตรวจสอบว่าได้เลือกเพศหรือไม่
+      if (_selectedGender == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("กรุณาเลือกเพศ")),
+        );
+        return false;
+      }
+
       setState(() {
         _isLoading = true;
       });
-
-      // สร้าง UUID สำหรับ user_id
-      // final uuid = Uuid();
-      // final userId = uuid.v4(); // สร้าง UUID v4 (random)
 
       String? imageUrl;
 
       // อัปโหลดรูปภาพไปที่ Firebase Storage (ถ้ามี)
       if (_image != null) {
         try {
+          // สร้างชื่อไฟล์ที่ไม่ซ้ำกันโดยใช้ userId แกะกัน
+          final fileName = 'profile_${widget.userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          
           final storageRef = FirebaseStorage.instance
               .ref()
               .child('profile_images')
-              .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
+              .child(fileName);
+
+          // แสดงข้อความกำลังอัปโหลด
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("กำลังอัปโหลดรูปภาพ...")),
+          );
 
           // อัปโหลดรูปภาพ
-          await storageRef.putFile(
+          final uploadTask = storageRef.putFile(
             _image!,
             SettableMetadata(contentType: 'image/jpeg'),
           );
 
+          // ติดตามความคืบหน้าของการอัปโหลด (ถ้าต้องการ)
+          uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+            final progress = snapshot.bytesTransferred / snapshot.totalBytes;
+            print('Upload progress: ${(progress * 100).toStringAsFixed(2)}%');
+          });
+
+          // รอจนกว่าการอัปโหลดจะเสร็จสิ้น
+          await uploadTask;
+
           // รับ URL ของรูปภาพ
           imageUrl = await storageRef.getDownloadURL();
+          
+          print('Image uploaded successfully. URL: $imageUrl');
+          
+          // ปิดข้อความกำลังอัปโหลด
+          ScaffoldMessenger.of(context).clearSnackBars();
+          
         } catch (storageError) {
           print('Firebase Storage error: $storageError');
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ: ${storageError.toString()}")),
+          );
+          
           // ถ้าเกิดข้อผิดพลาดในการอัปโหลดรูปภาพ ให้ดำเนินการต่อโดยไม่มีรูปภาพ
           imageUrl = null;
         }
@@ -166,7 +205,7 @@ class _CreateProfileState extends State<CreateProfile> {
       // เรียกใช้ API สร้างผู้ใช้
       final response = await apiService.createUser(
         user_id: widget.userId, // ใช้ Firebase UID ที่ส่งมาจาก widget
-        username: usernameController.text,
+        username: usernameController.text.trim(),
         gender: genderString,
         imageUrl: imageUrl,
       );
@@ -177,6 +216,10 @@ class _CreateProfileState extends State<CreateProfile> {
           _isLoading = false;
         });
 
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("สร้างโปรไฟล์สำเร็จ")),
+        );
+
         // นำทางไปยังหน้าหลัก
         Navigator.pushReplacement(
           context,
@@ -185,10 +228,15 @@ class _CreateProfileState extends State<CreateProfile> {
 
         return true;
       } else {
-        print('API response does not contain ID: $response');
+        print('API response error: $response');
         setState(() {
           _isLoading = false;
         });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("เกิดข้อผิดพลาดในการสร้างโปรไฟล์: ${response['message'] ?? 'Unknown error'}")),
+        );
+        
         return false;
       }
     } catch (e) {
@@ -318,27 +366,8 @@ class _CreateProfileState extends State<CreateProfile> {
         onPressed: () async {
           // ตรวจสอบความถูกต้องของฟอร์ม
           if (_formKey.currentState!.validate()) {
-            // ตรวจสอบว่าได้เลือกเพศหรือไม่
-            if (_selectedGender == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("กรุณาเลือกเพศ")),
-              );
-              return;
-            }
-
-            // บันทึกข้อมูลผ่าน API
-            bool success = await createUserViaApi();
-            if (success) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const HomePage()),
-              );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text("เกิดข้อผิดพลาดในการบันทึกข้อมูล")),
-              );
-            }
+            // เรียกใช้ฟังก์ชันสร้างผู้ใช้
+            await createUserViaApi();
           }
         },
         backgroundColor: Colors.white,

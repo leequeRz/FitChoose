@@ -49,23 +49,23 @@ async def create_user(new_user: UserModel):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
 
-@router.put("/users/{user_id}")
-async def update_user(user_id: str, updated_user: UserUpdateModel):
-    """อัปเดตข้อมูลผู้ใช้"""
-    try:
-        id = ObjectId(user_id)
-        existing_user = user_collection.find_one({"_id": id, "is_deleted": False})
-        if not existing_user:
-            raise HTTPException(status_code=404, detail="User not found")
+# @router.put("/users/{user_id}")
+# async def update_user(user_id: str, updated_user: UserUpdateModel):
+#     """อัปเดตข้อมูลผู้ใช้"""
+#     try:
+#         id = ObjectId(user_id)
+#         existing_user = user_collection.find_one({"_id": id, "is_deleted": False})
+#         if not existing_user:
+#             raise HTTPException(status_code=404, detail="User not found")
         
-        # กรองเฉพาะฟิลด์ที่มีค่า
-        update_data = {k: v for k, v in dict(updated_user).items() if v is not None}
-        update_data["updated_at"] = datetime.timestamp(datetime.now())
+#         # กรองเฉพาะฟิลด์ที่มีค่า
+#         update_data = {k: v for k, v in dict(updated_user).items() if v is not None}
+#         update_data["updated_at"] = datetime.timestamp(datetime.now())
         
-        user_collection.update_one({"_id": id}, {"$set": update_data})
-        return {"status_code": 200, "message": "User updated successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
+#         user_collection.update_one({"_id": id}, {"$set": update_data})
+#         return {"status_code": 200, "message": "User updated successfully"}
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
 
 @router.delete("/users/{user_id}")
 async def delete_user(user_id: str):
@@ -98,6 +98,24 @@ async def check_user_exists(firebase_uid: str):
         return {"exists": False}
     except Exception as e:
         print(f"Error checking user exists: {e}")
+        raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
+
+@router.put("/users/update-by-firebase-uid/{firebase_uid}")
+async def update_user_by_firebase_uid(firebase_uid: str, updated_user: UserUpdateModel):
+    """อัปเดตข้อมูลผู้ใช้โดยใช้ Firebase UID"""
+    try:
+        existing_user = user_collection.find_one({"user_id": firebase_uid, "is_deleted": False})
+        if not existing_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # กรองเฉพาะฟิลด์ที่มีค่า
+        update_data = {k: v for k, v in dict(updated_user).items() if v is not None}
+        # update_data["updated_at"] = datetime.timestamp(datetime.now())
+        
+        user_collection.update_one({"user_id": firebase_uid}, {"$set": update_data})
+        return {"status_code": 200, "message": "User updated successfully"}
+    except Exception as e:
+        print(f"Error updating user: {e}")
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
 
 app.include_router(router)
