@@ -5,8 +5,8 @@ import 'package:fitchoose/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-// เพิ่ม imports สำหรับ Firebase
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:fitchoose/widgets/profile_picture_guide_popup.dart';
 
 class CreateProfile extends StatefulWidget {
   final String userId;
@@ -95,6 +95,11 @@ class _CreateProfileState extends State<CreateProfile> {
     if (!widget.isNewUser) {
       _checkExistingProfile();
     }
+
+    // แสดง popup หลังจากที่ widget ถูกสร้างเสร็จ
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showProfilePictureGuide();
+    });
   }
 
   // เพิ่มฟังก์ชันตรวจสอบโปรไฟล์ที่มีอยู่
@@ -114,6 +119,21 @@ class _CreateProfileState extends State<CreateProfile> {
       print('Error checking profile: $e');
       // ถ้าเกิดข้อผิดพลาด ให้แสดงหน้าสร้างโปรไฟล์ตามปกติ
     }
+  }
+
+  // เพิ่มฟังก์ชันสำหรับแสดง popup
+  void _showProfilePictureGuide() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // ป้องกันการปิดโดยการแตะพื้นหลัง
+      builder: (BuildContext context) {
+        return ProfilePictureGuidePopup(
+          onClose: () {
+            Navigator.of(context).pop();
+          },
+        );
+      },
+    );
   }
 
   // เพิ่มฟังก์ชันสำหรับอัปโหลดรูปภาพและสร้างผู้ใช้ผ่าน API
@@ -145,8 +165,9 @@ class _CreateProfileState extends State<CreateProfile> {
       if (_image != null) {
         try {
           // สร้างชื่อไฟล์ที่ไม่ซ้ำกันโดยใช้ userId แกะกัน
-          final fileName = 'profile_${widget.userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-          
+          final fileName =
+              'profile_${widget.userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
           final storageRef = FirebaseStorage.instance
               .ref()
               .child('profile_images')
@@ -174,19 +195,20 @@ class _CreateProfileState extends State<CreateProfile> {
 
           // รับ URL ของรูปภาพ
           imageUrl = await storageRef.getDownloadURL();
-          
+
           print('Image uploaded successfully. URL: $imageUrl');
-          
+
           // ปิดข้อความกำลังอัปโหลด
           ScaffoldMessenger.of(context).clearSnackBars();
-          
         } catch (storageError) {
           print('Firebase Storage error: $storageError');
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ: ${storageError.toString()}")),
+            SnackBar(
+                content: Text(
+                    "เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ: ${storageError.toString()}")),
           );
-          
+
           // ถ้าเกิดข้อผิดพลาดในการอัปโหลดรูปภาพ ให้ดำเนินการต่อโดยไม่มีรูปภาพ
           imageUrl = null;
         }
@@ -232,11 +254,13 @@ class _CreateProfileState extends State<CreateProfile> {
         setState(() {
           _isLoading = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("เกิดข้อผิดพลาดในการสร้างโปรไฟล์: ${response['message'] ?? 'Unknown error'}")),
+          SnackBar(
+              content: Text(
+                  "เกิดข้อผิดพลาดในการสร้างโปรไฟล์: ${response['message'] ?? 'Unknown error'}")),
         );
-        
+
         return false;
       }
     } catch (e) {

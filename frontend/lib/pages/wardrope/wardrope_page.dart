@@ -5,6 +5,7 @@ import 'package:fitchoose/pages/wardrope/wardrope_upper.dart';
 import 'package:fitchoose/services/garment_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:fitchoose/widgets/profile_picture_guide_popup.dart';
 
 class WardropePage extends StatefulWidget {
   const WardropePage({super.key});
@@ -17,7 +18,7 @@ class _WardropePageState extends State<WardropePage> {
   final GarmentService _garmentService = GarmentService();
   final ImagePicker _picker = ImagePicker();
   bool isLoading = false;
-  
+
   // จำนวนเสื้อผ้าในแต่ละหมวดหมู่
   int upperCount = 0;
   int lowerCount = 0;
@@ -27,6 +28,25 @@ class _WardropePageState extends State<WardropePage> {
   void initState() {
     super.initState();
     _loadGarmentCounts();
+    // แสดง popup หลังจากที่ widget ถูกสร้างเสร็จ
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showProfilePictureGuide();
+    });
+  }
+
+// เพิ่มฟังก์ชันสำหรับแสดง popup
+  void _showProfilePictureGuide() {
+    showDialog(
+      context: context,
+      barrierDismissible: true, // อนุญาตให้ปิดโดยการแตะพื้นหลัง
+      builder: (BuildContext context) {
+        return ProfilePictureGuidePopup(
+          onClose: () {
+            Navigator.of(context).pop();
+          },
+        );
+      },
+    );
   }
 
   // โหลดจำนวนเสื้อผ้าในแต่ละหมวดหมู่
@@ -128,7 +148,8 @@ class _WardropePageState extends State<WardropePage> {
 
     try {
       // อัปโหลดรูปภาพไปยัง Firebase Storage
-      final imageUrl = await _garmentService.uploadGarmentImage(imageFile, garmentType);
+      final imageUrl =
+          await _garmentService.uploadGarmentImage(imageFile, garmentType);
 
       if (imageUrl != null) {
         // บันทึกข้อมูลใน MongoDB
@@ -141,7 +162,7 @@ class _WardropePageState extends State<WardropePage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Garment added successfully')),
           );
-          
+
           // โหลดจำนวนเสื้อผ้าใหม่
           await _loadGarmentCounts();
         } else {
@@ -171,7 +192,7 @@ class _WardropePageState extends State<WardropePage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0FF), // Light purple background
       body: SafeArea(
-        child: isLoading 
+        child: isLoading
             ? const Center(child: CircularProgressIndicator())
             : Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -186,12 +207,32 @@ class _WardropePageState extends State<WardropePage> {
                         color: Color(0xFF3B1E54), // Deep purple
                       ),
                     ),
-                    const Text(
-                      'Your Outfits',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Color(0xFF9B7EBD), // Medium purple
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Your Outfits',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Color(0xFF9B7EBD), // Medium purple
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            _showProfilePictureGuide();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF9B7EBD),
+                          ),
+                          child: Text(
+                            'Picture Guide',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 24),
                     Expanded(
