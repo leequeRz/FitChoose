@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:fitchoose/services/garment_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class VirtualTryOnPage extends StatefulWidget {
   const VirtualTryOnPage({super.key});
@@ -9,26 +11,84 @@ class VirtualTryOnPage extends StatefulWidget {
   _VirtualTryOnPageState createState() => _VirtualTryOnPageState();
 }
 
-class _VirtualTryOnPageState extends State<VirtualTryOnPage> {
+class _VirtualTryOnPageState extends State<VirtualTryOnPage>
+    with WidgetsBindingObserver {
   String selectedCategory = 'Upper-Body';
+  bool isLoading = true;
+  final GarmentService _garmentService = GarmentService();
 
-  // Sample data - Replace with your actual data
-  final Map<String, List<String>> clothingItems = {
-    'Upper-Body': [
-      'assets/images/test.png',
-    ],
-    'Lower-Body': [
-      'assets/images/test.png',
-      'assets/images/test.png',
-    ],
-    'Dress': [
-      'assets/images/test.png',
-      'assets/images/test.png',
-      'assets/images/test.png',
-    ],
+  // เปลี่ยนโครงสร้างข้อมูลเพื่อรองรับข้อมูลจาก API
+  final Map<String, List<Map<String, dynamic>>> clothingItems = {
+    'Upper-Body': [],
+    'Lower-Body': [],
+    'Dress': [],
   };
 
   File? _image;
+
+  @override
+  void initState() {
+    super.initState();
+    // เพิ่ม observer เพื่อตรวจจับเมื่อแอปกลับมาที่หน้านี้
+    WidgetsBinding.instance.addObserver(this);
+    _loadGarments();
+  }
+
+  @override
+  void dispose() {
+    // ลบ observer เมื่อออกจากหน้านี้
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // เพิ่มฟังก์ชันเพื่อตรวจจับเมื่อแอปกลับมาที่หน้านี้
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // รีโหลดข้อมูลเมื่อแอปกลับมาทำงาน
+      _loadGarments();
+    }
+  }
+
+  // เพิ่มฟังก์ชันสำหรับโหลดข้อมูลเสื้อผ้า
+  Future<void> _loadGarments() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        // ดึงข้อมูลเสื้อผ้าแต่ละประเภท
+        final upperGarments = await _garmentService.getGarmentsByType('upper');
+        final lowerGarments = await _garmentService.getGarmentsByType('lower');
+        final dressGarments = await _garmentService.getGarmentsByType('dress');
+
+        // ตรวจสอบว่าหน้านี้ยังคงอยู่ในสแต็ค (ป้องกันการเรียก setState หลังจาก dispose)
+        if (mounted) {
+          setState(() {
+            clothingItems['Upper-Body'] = upperGarments;
+            clothingItems['Lower-Body'] = lowerGarments;
+            clothingItems['Dress'] = dressGarments;
+            isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading garments: $e');
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
 
   Future<void> pickImage() async {
     final pickedFile =
@@ -37,7 +97,15 @@ class _VirtualTryOnPageState extends State<VirtualTryOnPage> {
       setState(() {
         _image = File(pickedFile.path);
       });
+
+      // เพิ่มปุ่มหรือฟังก์ชันสำหรับอัปโหลดรูปภาพไปยัง Wardrobe ที่นี่
+      // หลังจากอัปโหลดเสร็จ ให้เรียก _loadGarments() เพื่อรีโหลดข้อมูล
     }
+  }
+
+  // เพิ่มฟังก์ชันเพื่อรีเฟรชข้อมูลเมื่อกดปุ่ม
+  Future<void> _refreshData() async {
+    await _loadGarments();
   }
 
   @override
@@ -50,20 +118,35 @@ class _VirtualTryOnPageState extends State<VirtualTryOnPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Virtual Try-on',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF3B1E54), // Deep purple
-                ),
-              ),
-              const Text(
-                'Customize your outfit effortlessly',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Color(0xFF9B7EBD), // Medium purple
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Virtual Try-on',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF3B1E54), // Deep purple
+                        ),
+                      ),
+                      Text(
+                        'Customize your outfit effortlessly',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Color(0xFF9B7EBD), // Medium purple
+                        ),
+                      ),
+                    ],
+                  ),
+                  // เพิ่มปุ่มรีเฟรช
+                  IconButton(
+                    icon: const Icon(Icons.refresh, color: Color(0xFF9B7EBD)),
+                    onPressed: _refreshData,
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
               GestureDetector(
@@ -135,24 +218,38 @@ class _VirtualTryOnPageState extends State<VirtualTryOnPage> {
               ),
               SizedBox(height: 24),
               Expanded(
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1,
-                  ),
-                  itemCount: clothingItems[selectedCategory]?.length ?? 0,
-                  itemBuilder: (context, index) {
-                    return ClothingItemCard(
-                      imagePath: clothingItems[selectedCategory]![index],
-                      onDeleteTap: () {
-                        // Handle delete
-                        print('Delete item $index from $selectedCategory');
-                      },
-                    );
-                  },
-                ),
+                child: isLoading
+                    ? const Center(
+                        child:
+                            CircularProgressIndicator(color: Color(0xFF9B7EBD)))
+                    : clothingItems[selectedCategory]!.isEmpty
+                        ? Center(
+                            child: Text(
+                              'No ${selectedCategory} items found',
+                              style: TextStyle(
+                                color: Color(0xFF9B7EBD),
+                                fontSize: 16,
+                              ),
+                            ),
+                          )
+                        : GridView.builder(
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 1,
+                            ),
+                            itemCount:
+                                clothingItems[selectedCategory]?.length ?? 0,
+                            itemBuilder: (context, index) {
+                              final garment =
+                                  clothingItems[selectedCategory]![index];
+                              return ClothingItemCard(
+                                imageUrl: garment['garment_image'],
+                              );
+                            },
+                          ),
               )
             ],
           ),
@@ -199,21 +296,21 @@ class CategoryButton extends StatelessWidget {
   }
 }
 
-// Clothing Item Card Widget
+// Clothing Item Card Widget - ปรับเพื่อรองรับ URL แทน asset path
 class ClothingItemCard extends StatelessWidget {
-  final String imagePath;
+  final String imageUrl;
   final VoidCallback? onDeleteTap;
 
   const ClothingItemCard({
     Key? key,
-    required this.imagePath,
+    required this.imageUrl,
     this.onDeleteTap,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: const Color(0xFFF8F1FF),
         borderRadius: BorderRadius.circular(16),
@@ -225,12 +322,21 @@ class ClothingItemCard extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
-              child: Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(imagePath, fit: BoxFit.cover),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                width: double.infinity, // ให้กว้างเต็มพื้นที่
+                height: double.infinity, // ให้สูงเต็มพื้นที่
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover, // ใช้ cover เพื่อให้รูปเต็มพื้นที่
+                  errorBuilder: (context, error, stackTrace) => const Center(
+                    child: Icon(
+                      Icons.broken_image,
+                      size: 50,
+                      color: Colors.grey,
+                    ),
+                  ),
                 ),
               ),
             ),

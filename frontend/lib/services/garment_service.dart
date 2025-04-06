@@ -135,4 +135,69 @@ class GarmentService {
     final garments = await getGarmentsByType(garmentType);
     return garments.length;
   }
+
+  // ดึงข้อมูลเสื้อผ้าทั้งหมดสำหรับ Virtual Try-On
+  Future<Map<String, List<Map<String, dynamic>>>>
+      getAllGarmentsForVirtualTryOn() async {
+    try {
+      final Map<String, List<Map<String, dynamic>>> result = {
+        'upper': [],
+        'lower': [],
+        'dress': [],
+      };
+
+      // ดึงข้อมูลเสื้อผ้าแต่ละประเภท
+      result['upper'] = await getGarmentsByType('upper');
+      result['lower'] = await getGarmentsByType('lower');
+      result['dress'] = await getGarmentsByType('dress');
+
+      return result;
+    } catch (e) {
+      print('Error getting all garments for virtual try-on: $e');
+      return {
+        'upper': [],
+        'lower': [],
+        'dress': [],
+      };
+    }
+  }
+
+  // ดึงข้อมูลเสื้อผ้าล่าสุดในแต่ละประเภทสำหรับ Virtual Try-On
+  Future<Map<String, Map<String, dynamic>?>>
+      getLatestGarmentsForVirtualTryOn() async {
+    try {
+      final Map<String, Map<String, dynamic>?> result = {
+        'upper': null,
+        'lower': null,
+        'dress': null,
+      };
+
+      // ดึงข้อมูลเสื้อผ้าแต่ละประเภท
+      final upperGarments = await getGarmentsByType('upper');
+      final lowerGarments = await getGarmentsByType('lower');
+      final dressGarments = await getGarmentsByType('dress');
+
+      // เลือกเสื้อผ้าล่าสุดในแต่ละประเภท (ถ้ามี)
+      if (upperGarments.isNotEmpty) {
+        result['upper'] = upperGarments.first;
+      }
+
+      if (lowerGarments.isNotEmpty) {
+        result['lower'] = lowerGarments.first;
+      }
+
+      if (dressGarments.isNotEmpty) {
+        result['dress'] = dressGarments.first;
+      }
+
+      return result;
+    } catch (e) {
+      print('Error getting latest garments for virtual try-on: $e');
+      return {
+        'upper': null,
+        'lower': null,
+        'dress': null,
+      };
+    }
+  }
 }
