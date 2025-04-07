@@ -1,5 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fitchoose/components/loginregis/%E0%B8%B4button_login_regis.dart';
+import 'package:fitchoose/components/loginregis/button_login_regis.dart';
 import 'package:fitchoose/components/loginregis/login_regis_textfield.dart';
 import 'package:fitchoose/components/loginregis/square_tile.dart';
 import 'package:fitchoose/pages/loginregister/forget_pw_page.dart';
