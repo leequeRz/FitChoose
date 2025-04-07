@@ -4,7 +4,11 @@ import 'package:fitchoose/components/matchingresult_picturesuggest.dart';
 import 'package:flutter/material.dart';
 
 class MatchingResult extends StatefulWidget {
-  const MatchingResult({super.key});
+  // แก้ไขการประกาศพารามิเตอร์ให้ถูกต้อง
+  final Map<String, dynamic>? upperGarment;
+  final Map<String, dynamic>? lowerGarment;
+
+  const MatchingResult({super.key, this.upperGarment, this.lowerGarment});
 
   @override
   State<MatchingResult> createState() => _MatchingResultState();
@@ -26,6 +30,10 @@ class _MatchingResultState extends State<MatchingResult> {
 
   @override
   Widget build(BuildContext context) {
+    // ตรวจสอบว่ามีเสื้อผ้าที่เลือกหรือไม่
+    String? upperImageUrl = widget.upperGarment?['garment_image'];
+    String? lowerImageUrl = widget.lowerGarment?['garment_image'];
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0FF),
       appBar: AppBar(
@@ -58,13 +66,32 @@ class _MatchingResultState extends State<MatchingResult> {
                     ),
                   ),
                   SizedBox(height: 36),
-                  Center(
-                    child: PictureSelect(
-                      imageUrl: 'assets/images/test.png',
-                      width: 160,
-                      height: 160,
+                  // แสดงรูปเสื้อผ้าที่เลือก
+                  if (upperImageUrl != null)
+                    Center(
+                      child: PictureSelect(
+                        imageUrl: upperImageUrl,
+                        width: 160,
+                        height: 160,
+                      ),
                     ),
-                  ),
+                  if (lowerImageUrl != null)
+                    Center(
+                      child: PictureSelect(
+                        imageUrl: lowerImageUrl,
+                        width: 160,
+                        height: 160,
+                      ),
+                    ),
+                  // ถ้าไม่มีรูปเสื้อผ้าที่เลือก ให้แสดงรูปเดิม
+                  if (upperImageUrl == null && lowerImageUrl == null)
+                    Center(
+                      child: PictureSelect(
+                        imageUrl: 'assets/images/test.png',
+                        width: 160,
+                        height: 160,
+                      ),
+                    ),
                   SizedBox(height: 36),
                   StyleDescriptionCard(
                     title: 'Vintage Style',
