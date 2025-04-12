@@ -1,7 +1,7 @@
-from fastapi import FastAPI, APIRouter, HTTPException
-from configuration import user_collection, garment_collection
+from fastapi import FastAPI, APIRouter, HTTPException, Body
+from configuration import user_collection, garment_collection, matching_collection
 from database.schemas import all_users, user_data
-from database.models import UserModel, UserUpdateModel, Garment
+from database.models import UserModel, UserUpdateModel, Garment, MatchingModel, FavoriteUpdateModel
 from bson.objectid import ObjectId
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
@@ -48,24 +48,6 @@ async def create_user(new_user: UserModel):
         return {"status_code": 200, "id": str(resp.inserted_id), "message": "User created successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
-
-# @router.put("/users/{user_id}")
-# async def update_user(user_id: str, updated_user: UserUpdateModel):
-#     """อัปเดตข้อมูลผู้ใช้"""
-#     try:
-#         id = ObjectId(user_id)
-#         existing_user = user_collection.find_one({"_id": id, "is_deleted": False})
-#         if not existing_user:
-#             raise HTTPException(status_code=404, detail="User not found")
-        
-#         # กรองเฉพาะฟิลด์ที่มีค่า
-#         update_data = {k: v for k, v in dict(updated_user).items() if v is not None}
-#         update_data["updated_at"] = datetime.timestamp(datetime.now())
-        
-#         user_collection.update_one({"_id": id}, {"$set": update_data})
-#         return {"status_code": 200, "message": "User updated successfully"}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
 
 @router.delete("/users/{user_id}")
 async def delete_user(user_id: str):
@@ -143,6 +125,22 @@ async def create_garment(garment_data: dict):
         print(f"Error creating garment: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# เพิ่ม route สำหรับการดึงข้อมูลเสื้อผ้าตาม ID
+@router.get("/garments/{garment_id}")
+async def get_garment_by_id(garment_id: str):
+    try:
+        garment = garment_collection.find_one({"_id": ObjectId(garment_id)})
+        if not garment:
+            raise HTTPException(status_code=404, detail="Garment not found")
+        
+        # แปลง ObjectId เป็น string
+        garment["_id"] = str(garment["_id"])
+        return garment
+    except Exception as e:
+        print(f"Error getting garment: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 #get_garments_by_type
 @router.get("/garments/user/{user_id}/type/{garment_type}")
 async def get_garments_by_type(user_id: str, garment_type: str):
@@ -178,6 +176,122 @@ async def delete_garment(garment_id: str):
         return {"message": "Garment deleted successfully"}
     except Exception as e:
         print(f"Error deleting garment: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# เพิ่ม route สำหรับการบันทึก matching
+@router.post("/matchings/create")
+async def create_matching(matching_data: MatchingModel):
+    try:
+        # รับข้อมูลจาก request - เปลี่ยนจาก .get() เป็นการเข้าถึงโดยตรง
+        user_id = matching_data.user_id
+        garment_top = matching_data.garment_top
+        garment_bottom = matching_data.garment_bottom
+        matching_result = matching_data.matching_result
+        matching_date = matching_data.matching_date
+        is_favorite = matching_data.is_favorite if hasattr(matching_data, 'is_favorite') else False
+        
+        # ตรวจสอบว่ามีการเลือกเสื้อผ้าอย่างน้อย 1 ชิ้น
+        if not garment_top and not garment_bottom:
+            raise HTTPException(status_code=400, detail="At least one garment is required")
+            
+        # สร้าง matching ใหม่
+        new_matching = {
+            "user_id": user_id,
+            "garment_top": garment_top,
+            "garment_bottom": garment_bottom,
+            "matching_result": matching_result,
+            "matching_date": matching_date or datetime.now().isoformat(),
+            "is_favorite": is_favorite
+        }
+        
+        # บันทึกลงใน MongoDB
+        result = matching_collection.insert_one(new_matching)
+        matching_id = str(result.inserted_id)
+        
+        # ส่งข้อมูลกลับไปยัง client
+        return {
+            "status": "success",
+            "matching_id": matching_id,
+            "message": "Matching created successfully"
+        }
+        
+    except Exception as e:
+        print(f"Error creating matching: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# เพิ่ม route สำหรับการดึงข้อมูล matching ตาม ID
+@router.get("/matchings/{matching_id}")
+async def get_matching(matching_id: str):
+    try:
+        matching = matching_collection.find_one({"_id": ObjectId(matching_id)})
+        if not matching:
+            raise HTTPException(status_code=404, detail="Matching not found")
+        
+        # แปลง ObjectId เป็น string
+        matching["_id"] = str(matching["_id"])
+        return matching
+    except Exception as e:
+        print(f"Error getting matching: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# เพิ่ม route สำหรับการดึงข้อมูล matching ทั้งหมดของผู้ใช้
+@router.get("/matchings/user/{user_id}")
+async def get_user_matchings(user_id: str):
+    try:
+        matchings = matching_collection.find({"user_id": user_id}).sort("matching_date", -1)
+        
+        # แปลงเป็น list และแปลง ObjectId เป็น string
+        result = []
+        for matching in matchings:
+            matching["_id"] = str(matching["_id"])
+            result.append(matching)
+        
+        return result
+    except Exception as e:
+        print(f"Error getting user matchings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# เพิ่ม route สำหรับการอัปเดตสถานะ favorite
+@router.put("/matchings/{matching_id}/favorite")
+async def update_favorite(matching_id: str, data: FavoriteUpdateModel):
+    try:
+        is_favorite = data.is_favorite  # เปลี่ยนจาก .get() เป็นการเข้าถึงโดยตรง
+        
+        # ตรวจสอบว่ามี matching นี้หรือไม่
+        matching = matching_collection.find_one({"_id": ObjectId(matching_id)})
+        if not matching:
+            raise HTTPException(status_code=404, detail="Matching not found")
+        
+        # อัปเดตสถานะ favorite
+        matching_collection.update_one(
+            {"_id": ObjectId(matching_id)}, 
+            {"$set": {"is_favorite": is_favorite}}
+        )
+        
+        # ดึงข้อมูลที่อัปเดตแล้ว
+        updated_matching = matching_collection.find_one({"_id": ObjectId(matching_id)})
+        updated_matching["_id"] = str(updated_matching["_id"])
+        
+        return updated_matching
+    except Exception as e:
+        print(f"Error updating favorite status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# เพิ่ม route สำหรับการลบ matching
+@router.delete("/matchings/{matching_id}")
+async def delete_matching(matching_id: str):
+    try:
+        # ตรวจสอบว่ามี matching นี้หรือไม่
+        matching = matching_collection.find_one({"_id": ObjectId(matching_id)})
+        if not matching:
+            raise HTTPException(status_code=404, detail="Matching not found")
+        
+        # ลบ matching
+        matching_collection.delete_one({"_id": ObjectId(matching_id)})
+        
+        return {"message": "Matching deleted successfully"}
+    except Exception as e:
+        print(f"Error deleting matching: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # เพิ่ม CORS middleware ให้ถูกต้อง

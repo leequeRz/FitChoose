@@ -200,4 +200,51 @@ class ApiService {
       throw Exception('Error: $e');
     }
   }
+
+  // แก้ไขฟังก์ชัน post - ย้ายเข้ามาในคลาส
+  Future<dynamic> post(String endpoint, dynamic data) async {
+    try {
+      print('POST request to $endpoint with data: $data');
+      final response = await http.post(
+        Uri.parse('$baseUrl$endpoint'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to post data: ${response.body}');
+      }
+    } catch (e) {
+      print('Error in API post: $e');
+      rethrow;
+    }
+  }
+
+  // เพิ่มฟังก์ชัน get สำหรับการดึงข้อมูล
+  Future<dynamic> get(String endpoint) async {
+    try {
+      print('GET request to $endpoint');
+      final response = await http.get(
+        Uri.parse('$baseUrl$endpoint'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to get data: ${response.body}');
+      }
+    } catch (e) {
+      print('Error in API get: $e');
+      rethrow;
+    }
+  }
 }

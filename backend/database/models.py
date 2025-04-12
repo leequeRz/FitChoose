@@ -101,3 +101,41 @@ class Garment:
             "garment_image": self.garment_image,
             "created_at": self.created_at
         }
+# เพิ่ม model สำหรับ Matching
+class MatchingModel(BaseModel):
+    id: Optional[PyObjectId] = Field(default=None, alias="_id")
+    user_id: str
+    garment_top: Optional[str] = None  # อาจเป็น null ถ้าเลือกเฉพาะส่วนล่าง
+    garment_bottom: Optional[str] = None  # อาจเป็น null ถ้าเลือกเฉพาะส่วนบน
+    matching_result: str
+    matching_date: Optional[str] = None
+    is_favorite: Optional[bool] = False
+
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        json_encoders={ObjectId: str},
+        json_schema_extra={
+            "example": {
+                "user_id": "user123",
+                "garment_top": "top123",
+                "garment_bottom": "bottom123",
+                "matching_result": "Casual Style",
+                "matching_date": "2023-01-01T12:00:00",
+                "is_favorite": False
+            }
+        }
+    )
+
+# เพิ่มโมเดลสำหรับการอัปเดตสถานะ favorite
+class FavoriteUpdateModel(BaseModel):
+    is_favorite: bool
+
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        json_encoders={ObjectId: str},
+        json_schema_extra={
+            "example": {
+                "is_favorite": True
+            }
+        }
+    )

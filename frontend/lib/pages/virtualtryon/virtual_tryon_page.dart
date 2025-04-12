@@ -115,143 +115,149 @@ class _VirtualTryOnPageState extends State<VirtualTryOnPage>
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'Virtual Try-on',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF3B1E54), // Deep purple
+          // เพิ่ม SingleChildScrollView เพื่อให้สามารถเลื่อนได้เมื่อเนื้อหาเกินขนาดหน้าจอ
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Virtual Try-on',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF3B1E54), // Deep purple
+                          ),
                         ),
-                      ),
-                      Text(
-                        'Customize your outfit effortlessly',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Color(0xFF9B7EBD), // Medium purple
+                        Text(
+                          'Customize your outfit effortlessly',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Color(0xFF9B7EBD), // Medium purple
+                          ),
                         ),
+                      ],
+                    ),
+                    // เพิ่มปุ่มรีเฟรช
+                    IconButton(
+                      icon: const Icon(Icons.refresh, color: Color(0xFF9B7EBD)),
+                      onPressed: _refreshData,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                GestureDetector(
+                  onTap: pickImage,
+                  child: Center(
+                    child: Container(
+                      width: 260,
+                      // ลดความสูงลงเล็กน้อย
+                      height: 300,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
                       ),
+                      child: _image == null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.image_outlined,
+                                  size: 60,
+                                  color: Color(0xFF9B7EBD),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  'Upload Your Picture',
+                                  style: TextStyle(
+                                    color: Color(0xFF9B7EBD),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: Image.file(
+                                _image!,
+                                width: 260,
+                                height: 300,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 24),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (String category in [
+                        'Upper-Body',
+                        'Lower-Body',
+                        'Dress'
+                      ])
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: CategoryButton(
+                            text: category,
+                            isSelected: selectedCategory == category,
+                            onTap: () {
+                              setState(() {
+                                selectedCategory = category;
+                              });
+                            },
+                          ),
+                        ),
                     ],
                   ),
-                  // เพิ่มปุ่มรีเฟรช
-                  IconButton(
-                    icon: const Icon(Icons.refresh, color: Color(0xFF9B7EBD)),
-                    onPressed: _refreshData,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              GestureDetector(
-                onTap: pickImage,
-                child: Center(
-                  child: Container(
-                    width: 260,
-                    height: 350,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: _image == null
-                        ? Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.image_outlined,
-                                size: 60,
-                                color: Color(0xFF9B7EBD),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                'Upload Your Picture',
+                ),
+                SizedBox(height: 24),
+                // แทนที่ Expanded ด้วย Container ที่มีความสูงคงที่
+                Container(
+                  height: 300, // กำหนดความสูงที่เหมาะสม
+                  child: isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                              color: Color(0xFF9B7EBD)))
+                      : clothingItems[selectedCategory]!.isEmpty
+                          ? Center(
+                              child: Text(
+                                'No ${selectedCategory} items found',
                                 style: TextStyle(
                                   color: Color(0xFF9B7EBD),
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                            ],
-                          )
-                        : ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: Image.file(
-                              _image!,
-                              width: 200,
-                              height: 200,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 24),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    for (String category in [
-                      'Upper-Body',
-                      'Lower-Body',
-                      'Dress'
-                    ])
-                      Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: CategoryButton(
-                          text: category,
-                          isSelected: selectedCategory == category,
-                          onTap: () {
-                            setState(() {
-                              selectedCategory = category;
-                            });
-                          },
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 24),
-              Expanded(
-                child: isLoading
-                    ? const Center(
-                        child:
-                            CircularProgressIndicator(color: Color(0xFF9B7EBD)))
-                    : clothingItems[selectedCategory]!.isEmpty
-                        ? Center(
-                            child: Text(
-                              'No ${selectedCategory} items found',
-                              style: TextStyle(
-                                color: Color(0xFF9B7EBD),
-                                fontSize: 16,
+                            )
+                          : GridView.builder(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                                childAspectRatio: 1,
                               ),
+                              itemCount:
+                                  clothingItems[selectedCategory]?.length ?? 0,
+                              itemBuilder: (context, index) {
+                                final garment =
+                                    clothingItems[selectedCategory]![index];
+                                return ClothingItemCard(
+                                  imageUrl: garment['garment_image'],
+                                );
+                              },
                             ),
-                          )
-                        : GridView.builder(
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                              childAspectRatio: 1,
-                            ),
-                            itemCount:
-                                clothingItems[selectedCategory]?.length ?? 0,
-                            itemBuilder: (context, index) {
-                              final garment =
-                                  clothingItems[selectedCategory]![index];
-                              return ClothingItemCard(
-                                imageUrl: garment['garment_image'],
-                              );
-                            },
-                          ),
-              )
-            ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

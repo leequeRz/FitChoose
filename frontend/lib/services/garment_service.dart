@@ -200,4 +200,51 @@ class GarmentService {
       };
     }
   }
+
+  // เพิ่มฟังก์ชันบันทึกข้อมูล matching
+  // แก้ไขฟังก์ชัน saveMatching
+  Future<dynamic> saveMatching(Map<String, dynamic> matchingData) async {
+    try {
+      print('Sending matching data to API: $matchingData');
+      final response =
+          await _apiService.post('/matchings/create', matchingData);
+      print('API response for saveMatching: $response');
+      return response;
+    } catch (e) {
+      print('Error in saveMatching: $e');
+      rethrow;
+    }
+  }
+
+  // เพิ่มฟังก์ชันดึงประวัติการทำ matching
+  Future<List<Map<String, dynamic>>> getMatchingHistory(String userId) async {
+    try {
+      final baseUrl = _apiService.baseUrl;
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/matching/history/$userId'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((item) => item as Map<String, dynamic>).toList();
+      } else {
+        throw Exception('Failed to load matching history');
+      }
+    } catch (e) {
+      print('Error getting matching history: $e');
+      throw e;
+    }
+  }
+
+  // เพิ่มฟังก์ชันสำหรับดึงข้อมูลเสื้อผ้าตาม ID
+  Future<Map<String, dynamic>?> getGarmentById(String garmentId) async {
+    try {
+      final response = await _apiService.get('/garments/$garmentId');
+      return response;
+    } catch (e) {
+      print('Error getting garment by ID: $e');
+      return null;
+    }
+  }
 }

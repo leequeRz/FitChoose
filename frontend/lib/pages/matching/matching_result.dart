@@ -7,8 +7,14 @@ class MatchingResult extends StatefulWidget {
   // แก้ไขการประกาศพารามิเตอร์ให้ถูกต้อง
   final Map<String, dynamic>? upperGarment;
   final Map<String, dynamic>? lowerGarment;
+  final String? matchingId; // เพิ่ม matchingId
 
-  const MatchingResult({super.key, this.upperGarment, this.lowerGarment});
+  const MatchingResult({
+    super.key,
+    this.upperGarment,
+    this.lowerGarment,
+    this.matchingId,
+  });
 
   @override
   State<MatchingResult> createState() => _MatchingResultState();
