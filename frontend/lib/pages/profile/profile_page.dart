@@ -217,79 +217,81 @@ class _ProfilePageState extends State<ProfilePage> {
       body: SafeArea(
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
-            : Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Profile',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF3B1E54), // Deep purple
+            : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Profile',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF3B1E54), // Deep purple
+                            ),
                           ),
-                        ),
-                        IconButton(
-                          onPressed: signUserOut,
-                          icon: Icon(Icons.logout),
-                        )
-                      ],
-                    ),
-                    const Text(
-                      'Your Profile',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Color(0xFF9B7EBD), // Deep purple
+                          IconButton(
+                            onPressed: signUserOut,
+                            icon: Icon(Icons.logout),
+                          )
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    ProfileNameSection(
-                      name: userName,
-                      onEditPressed: _showEditDialog,
-                    ),
-                    const SizedBox(height: 12),
-                    Center(
-                      child: GestureDetector(
-                        onTap: _pickAndUploadImage,
-                        child: PictureSelect(
-                          imageUrl: imageUrl ?? 'assets/images/test.png',
-                          width: 230,
-                          height: 300,
+                      const Text(
+                        'Your Profile',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Color(0xFF9B7EBD), // Deep purple
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 36),
-                    Text(
-                      'Gender',
-                      style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF3B1E54)),
-                    ),
-                    SizedBox(height: 12),
-                    Container(
-                      width: 160,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Color(0xFFD4BEE4),
-                        borderRadius: BorderRadius.circular(24),
+                      const SizedBox(height: 24),
+                      ProfileNameSection(
+                        name: userName,
+                        onEditPressed: _showEditDialog,
                       ),
-                      child: Center(
-                        child: Text(
-                          gender,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                      const SizedBox(height: 12),
+                      Center(
+                        child: GestureDetector(
+                          onTap: _pickAndUploadImage,
+                          child: PictureSelect(
+                            imageUrl: imageUrl ?? 'assets/images/test.png',
+                            width: 230,
+                            height: 300,
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 36),
+                      Text(
+                        'Gender',
+                        style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF3B1E54)),
+                      ),
+                      SizedBox(height: 12),
+                      Container(
+                        width: 160,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: Color(0xFFD4BEE4),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Center(
+                          child: Text(
+                            gender,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
       ),
