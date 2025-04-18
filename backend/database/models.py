@@ -108,6 +108,7 @@ class MatchingModel(BaseModel):
     garment_top: Optional[str] = None  # อาจเป็น null ถ้าเลือกเฉพาะส่วนล่าง
     garment_bottom: Optional[str] = None  # อาจเป็น null ถ้าเลือกเฉพาะส่วนบน
     matching_result: str
+    matching_detail: Optional[str] = None
     matching_date: Optional[str] = None
     is_favorite: Optional[bool] = False
 

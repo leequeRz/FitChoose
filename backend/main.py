@@ -187,6 +187,7 @@ async def create_matching(matching_data: MatchingModel):
         garment_top = matching_data.garment_top
         garment_bottom = matching_data.garment_bottom
         matching_result = matching_data.matching_result
+        matching_detail = matching_data.matching_detail
         matching_date = matching_data.matching_date
         is_favorite = matching_data.is_favorite if hasattr(matching_data, 'is_favorite') else False
         
@@ -200,6 +201,7 @@ async def create_matching(matching_data: MatchingModel):
             "garment_top": garment_top,
             "garment_bottom": garment_bottom,
             "matching_result": matching_result,
+            "matching_detail": matching_detail,
             "matching_date": matching_date or datetime.now().isoformat(),
             "is_favorite": is_favorite
         }

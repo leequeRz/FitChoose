@@ -523,6 +523,8 @@ class _MatchingPageState extends State<MatchingPage> {
                               'garment_bottom': selectedLowerGarment?['_id'],
                               'matching_result':
                                   'Vintage Style', // ตัวอย่างผลลัพธ์
+                              'matching_detail':
+                                  'Bringing back or reinterpreting past fashion styles, such as flared jeans that were popular in the 60s and have become trendy again in the present day.',
                               'matching_date': DateTime.now().toIso8601String(),
                               'is_favorite': false,
                             };
