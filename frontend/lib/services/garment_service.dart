@@ -201,50 +201,69 @@ class GarmentService {
     }
   }
 
-  // เพิ่มฟังก์ชันบันทึกข้อมูล matching
-  // แก้ไขฟังก์ชัน saveMatching
-  Future<dynamic> saveMatching(Map<String, dynamic> matchingData) async {
+  // ปรับปรุงฟังก์ชันบันทึกข้อมูล matching
+  Future<Map<String, dynamic>> saveMatching(
+      Map<String, dynamic> matchingData) async {
     try {
-      print('Sending matching data to API: $matchingData');
-      final response =
-          await _apiService.post('/matchings/create', matchingData);
-      print('API response for saveMatching: $response');
-      return response;
+      print('Saving matching data: $matchingData');
+      return await _apiService.createMatching(matchingData);
     } catch (e) {
       print('Error in saveMatching: $e');
       rethrow;
     }
   }
 
-  // เพิ่มฟังก์ชันดึงประวัติการทำ matching
-  Future<List<Map<String, dynamic>>> getMatchingHistory(String userId) async {
+  // ปรับปรุงฟังก์ชันสำหรับดึงข้อมูลเสื้อผ้าตาม ID
+  Future<Map<String, dynamic>?> getGarmentById(String garmentId) async {
     try {
-      final baseUrl = _apiService.baseUrl;
-
+      print('Getting garment with ID: $garmentId');
       final response = await http.get(
-        Uri.parse('$baseUrl/api/matching/history/$userId'),
+        Uri.parse('${_apiService.baseUrl}/garments/$garmentId'),
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((item) => item as Map<String, dynamic>).toList();
+        return jsonDecode(response.body);
       } else {
-        throw Exception('Failed to load matching history');
+        print(
+            'Failed to get garment: ${response.statusCode} - ${response.body}');
+        return null;
       }
-    } catch (e) {
-      print('Error getting matching history: $e');
-      throw e;
-    }
-  }
-
-  // เพิ่มฟังก์ชันสำหรับดึงข้อมูลเสื้อผ้าตาม ID
-  Future<Map<String, dynamic>?> getGarmentById(String garmentId) async {
-    try {
-      final response = await _apiService.get('/garments/$garmentId');
-      return response;
     } catch (e) {
       print('Error getting garment by ID: $e');
       return null;
+    }
+  }
+
+  // เพิ่มฟังก์ชันสำหรับดึงประวัติ matching
+  Future<List<Map<String, dynamic>>> getMatchingHistory(String userId) async {
+    try {
+      return await _apiService.getUserMatchings(userId);
+    } catch (e) {
+      print('Error getting matching history: $e');
+      return [];
+    }
+  }
+
+  // เพิ่มฟังก์ชันสำหรับอัปเดต favorite status
+  Future<bool> updateFavoriteStatus(String matchingId, bool isFavorite) async {
+    try {
+      await _apiService.updateMatchingFavorite(matchingId, isFavorite);
+      return true;
+    } catch (e) {
+      print('Error updating favorite status: $e');
+      return false;
+    }
+  }
+
+  // เพิ่มฟังก์ชันสำหรับอัปเดต matching detail
+  Future<bool> updateMatchingDetail(
+      String matchingId, String matchingDetail) async {
+    try {
+      await _apiService.updateMatchingDetail(matchingId, matchingDetail);
+      return true;
+    } catch (e) {
+      print('Error updating matching detail: $e');
+      return false;
     }
   }
 }

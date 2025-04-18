@@ -279,6 +279,34 @@ async def update_favorite(matching_id: str, data: FavoriteUpdateModel):
         print(f"Error updating favorite status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# เพิ่ม route สำหรับการอัปเดต matching detail
+@router.put("/matchings/{matching_id}/detail")
+async def update_matching_detail(matching_id: str, data: dict):
+    try:
+        matching_detail = data.get("matching_detail")
+        if not matching_detail:
+            raise HTTPException(status_code=400, detail="Matching detail is required")
+        
+        # ตรวจสอบว่ามี matching นี้หรือไม่
+        matching = matching_collection.find_one({"_id": ObjectId(matching_id)})
+        if not matching:
+            raise HTTPException(status_code=404, detail="Matching not found")
+        
+        # อัปเดต matching detail
+        matching_collection.update_one(
+            {"_id": ObjectId(matching_id)}, 
+            {"$set": {"matching_detail": matching_detail}}
+        )
+        
+        # ดึงข้อมูลที่อัปเดตแล้ว
+        updated_matching = matching_collection.find_one({"_id": ObjectId(matching_id)})
+        updated_matching["_id"] = str(updated_matching["_id"])
+        
+        return updated_matching
+    except Exception as e:
+        print(f"Error updating matching detail: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # เพิ่ม route สำหรับการลบ matching
 @router.delete("/matchings/{matching_id}")
 async def delete_matching(matching_id: str):

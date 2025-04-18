@@ -201,14 +201,13 @@ class ApiService {
     }
   }
 
-  // แก้ไขฟังก์ชัน post - ย้ายเข้ามาในคลาส
-  Future<dynamic> post(String endpoint, dynamic data) async {
+  Future<dynamic> createMatching(Map<String, dynamic> matchingData) async {
     try {
-      print('POST request to $endpoint with data: $data');
+      print('Creating matching with data: $matchingData');
       final response = await http.post(
-        Uri.parse('$baseUrl$endpoint'),
+        Uri.parse('$baseUrl/matchings/create'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(data),
+        body: jsonEncode(matchingData),
       );
 
       print('Response status: ${response.statusCode}');
@@ -217,20 +216,19 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return jsonDecode(response.body);
       } else {
-        throw Exception('Failed to post data: ${response.body}');
+        throw Exception('Failed to create matching: ${response.body}');
       }
     } catch (e) {
-      print('Error in API post: $e');
+      print('Error creating matching: $e');
       rethrow;
     }
   }
 
-  // เพิ่มฟังก์ชัน get สำหรับการดึงข้อมูล
-  Future<dynamic> get(String endpoint) async {
+  Future<Map<String, dynamic>> getMatchingById(String matchingId) async {
     try {
-      print('GET request to $endpoint');
+      print('Getting matching with ID: $matchingId');
       final response = await http.get(
-        Uri.parse('$baseUrl$endpoint'),
+        Uri.parse('$baseUrl/matchings/$matchingId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -240,10 +238,76 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        throw Exception('Failed to get data: ${response.body}');
+        throw Exception('Failed to get matching: ${response.body}');
       }
     } catch (e) {
-      print('Error in API get: $e');
+      print('Error getting matching: $e');
+      rethrow;
+    }
+  }
+
+// เพิ่มฟังก์ชันสำหรับดึงประวัติ matching ของผู้ใช้
+  Future<List<Map<String, dynamic>>> getUserMatchings(String userId) async {
+    try {
+      print('Getting matchings for user: $userId');
+      final response = await http.get(
+        Uri.parse('$baseUrl/matchings/user/$userId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((item) => item as Map<String, dynamic>).toList();
+      } else {
+        throw Exception('Failed to get user matchings: ${response.body}');
+      }
+    } catch (e) {
+      print('Error getting user matchings: $e');
+      rethrow;
+    }
+  }
+
+// เพิ่มฟังก์ชันสำหรับอัปเดตสถานะ favorite
+  Future<Map<String, dynamic>> updateMatchingFavorite(
+      String matchingId, bool isFavorite) async {
+    try {
+      print(
+          'Updating favorite status for matching: $matchingId to $isFavorite');
+      final response = await http.put(
+        Uri.parse('$baseUrl/matchings/$matchingId/favorite'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'is_favorite': isFavorite}),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to update favorite status: ${response.body}');
+      }
+    } catch (e) {
+      print('Error updating favorite status: $e');
+      rethrow;
+    }
+  }
+
+// เพิ่มฟังก์ชันสำหรับอัปเดต matching detail
+  Future<Map<String, dynamic>> updateMatchingDetail(
+      String matchingId, String matchingDetail) async {
+    try {
+      print('Updating detail for matching: $matchingId');
+      final response = await http.put(
+        Uri.parse('$baseUrl/matchings/$matchingId/detail'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'matching_detail': matchingDetail}),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to update matching detail: ${response.body}');
+      }
+    } catch (e) {
+      print('Error updating matching detail: $e');
       rethrow;
     }
   }

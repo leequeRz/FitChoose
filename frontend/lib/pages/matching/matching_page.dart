@@ -543,7 +543,7 @@ class _MatchingPageState extends State<MatchingPage> {
                             // ตรวจสอบและดึง matchingId จาก response
                             String? matchingId;
                             if (response != null) {
-                              if (response is Map) {
+                              if (response is Map<String, dynamic>) {
                                 // ถ้า response เป็น Map และมี key 'matching_id'
                                 if (response.containsKey('matching_id')) {
                                   matchingId = response['matching_id'];
@@ -558,46 +558,53 @@ class _MatchingPageState extends State<MatchingPage> {
                                     response['data'].containsKey('_id')) {
                                   matchingId = response['data']['_id'];
                                 }
-                              }
-                              // ถ้า response เป็น String (อาจเป็น matchingId โดยตรง)
-                              else if (response is String) {
-                                matchingId = response;
-                              }
 
-                              print('Extracted Matching ID: $matchingId');
+                                print('Extracted Matching ID: $matchingId');
 
-                              if (matchingId != null) {
-                                // ส่งข้อมูลเสื้อผ้าที่เลือกไปยังหน้า MatchingResult
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => MatchingResult(
-                                      upperGarment: selectedUpperGarment,
-                                      lowerGarment: selectedLowerGarment,
-                                      matchingId: matchingId,
+                                if (matchingId != null) {
+                                  // ส่งข้อมูลเสื้อผ้าที่เลือกไปยังหน้า MatchingResult
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => MatchingResult(
+                                        upperGarment: selectedUpperGarment,
+                                        lowerGarment: selectedLowerGarment,
+                                        matchingId: matchingId,
+                                      ),
                                     ),
-                                  ),
-                                ).then((_) {
-                                  // เมื่อกลับมาจากหน้า MatchingResult ให้รีเซ็ตการเลือกเสื้อผ้า
-                                  setState(() {
-                                    selectedUpperGarment = null;
-                                    selectedLowerGarment = null;
+                                  ).then((_) {
+                                    // เมื่อกลับมาจากหน้า MatchingResult ให้รีเซ็ตการเลือกเสื้อผ้า
+                                    setState(() {
+                                      selectedUpperGarment = null;
+                                      selectedLowerGarment = null;
+                                    });
                                   });
-                                });
+                                } else {
+                                  // กรณีไม่สามารถดึง matchingId ได้
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content:
+                                          Text('Failed to get matching ID'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
                               } else {
-                                // กรณีไม่สามารถดึง matchingId ได้
+                                // กรณีไม่ได้รับ response
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Failed to get matching ID'),
+                                    content:
+                                        Text('Failed to save matching data'),
                                     duration: Duration(seconds: 2),
                                   ),
                                 );
                               }
                             } else {
-                              // กรณีไม่ได้รับ response
+                              // กรณีไม่ได้ล็อกอิน
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Failed to save matching data'),
+                                  content: Text(
+                                      'Please login to use matching feature'),
                                   duration: Duration(seconds: 2),
                                 ),
                               );
