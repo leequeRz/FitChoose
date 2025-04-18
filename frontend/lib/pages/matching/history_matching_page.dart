@@ -91,16 +91,61 @@ class _HistoryMatchingPageState extends State<HistoryMatchingPage> {
                         DateFormat('MMM d, yyyy').format(date);
 
                     return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MatchingResult(
-                              matchingId: matching['_id'],
-                              // ส่งข้อมูลเพิ่มเติมถ้าจำเป็น
-                            ),
+                      onTap: () async {
+                        // แสดง loading indicator
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) => const Center(
+                            child: CircularProgressIndicator(
+                                color: Color(0xFF9B7EBD)),
                           ),
                         );
+
+                        try {
+                          // ดึงข้อมูลเสื้อผ้าส่วนบนและส่วนล่างก่อนนำทางไปยังหน้า MatchingResult
+                          Map<String, dynamic>? upperGarment;
+                          Map<String, dynamic>? lowerGarment;
+
+                          if (matching['garment_top'] != null) {
+                            upperGarment = await _garmentService
+                                .getGarmentById(matching['garment_top']);
+                          }
+
+                          if (matching['garment_bottom'] != null) {
+                            lowerGarment = await _garmentService
+                                .getGarmentById(matching['garment_bottom']);
+                          }
+
+                          // ปิด loading indicator
+                          Navigator.pop(context);
+
+                          // นำทางไปยังหน้า MatchingResult พร้อมข้อมูลที่จำเป็น
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MatchingResult(
+                                matchingId: matching['_id'],
+                                upperGarment: upperGarment,
+                                lowerGarment: lowerGarment,
+                                matchingDetail: matching['matching_detail'],
+                                matchingResult: matching['matching_result'],
+                              ),
+                            ),
+                          );
+                        } catch (e) {
+                          // ปิด loading indicator ในกรณีเกิดข้อผิดพลาด
+                          Navigator.pop(context);
+
+                          // แสดงข้อความแจ้งเตือน
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  'Error loading matching details: ${e.toString()}'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       },
                       child: Card(
                         margin: const EdgeInsets.only(bottom: 16),

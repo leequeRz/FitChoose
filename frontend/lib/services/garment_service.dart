@@ -266,4 +266,14 @@ class GarmentService {
       return false;
     }
   }
+
+  // เพิ่มฟังก์ชันสำหรับดึงข้อมูล matching ตาม ID
+  Future<Map<String, dynamic>> getMatchingById(String matchingId) async {
+    try {
+      return await _apiService.getMatchingById(matchingId);
+    } catch (e) {
+      print('Error in getMatchingById: $e');
+      rethrow;
+    }
+  }
 }

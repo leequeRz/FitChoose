@@ -1,6 +1,7 @@
 import 'package:fitchoose/components/container_matchingresult.dart';
 import 'package:fitchoose/components/pictureselect.dart';
 import 'package:fitchoose/components/matchingresult_picturesuggest.dart';
+import 'package:fitchoose/services/garment_service.dart';
 import 'package:flutter/material.dart';
 
 class MatchingResult extends StatefulWidget {
@@ -8,12 +9,16 @@ class MatchingResult extends StatefulWidget {
   final Map<String, dynamic>? upperGarment;
   final Map<String, dynamic>? lowerGarment;
   final String? matchingId; // เพิ่ม matchingId
+  final String? matchingDetail;
+  final String? matchingResult;
 
   const MatchingResult({
     super.key,
     this.upperGarment,
     this.lowerGarment,
     this.matchingId,
+    this.matchingDetail,
+    this.matchingResult,
   });
 
   @override
@@ -22,6 +27,14 @@ class MatchingResult extends StatefulWidget {
 
 class _MatchingResultState extends State<MatchingResult> {
   bool isFavorite = false;
+
+  // เพิ่มตัวแปรที่จำเป็น
+  final GarmentService _garmentService = GarmentService();
+  String matchingResult = 'Vintage Style'; // ค่าเริ่มต้น
+  String matchingDetail =
+      'Bringing back or reinterpreting past fashion styles, such as flared jeans that were popular in the 60s and have become trendy again in the present day.'; // ค่าเริ่มต้น
+  Map<String, dynamic>? upperGarment;
+  Map<String, dynamic>? lowerGarment;
 
   final List<String> clothingItems = [
     'assets/images/test.png',
@@ -33,6 +46,83 @@ class _MatchingResultState extends State<MatchingResult> {
     'assets/images/test.png',
     'assets/images/test.png',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // ใช้ค่าที่ส่งมาถ้ามี
+    if (widget.matchingResult != null) {
+      matchingResult = widget.matchingResult!;
+    }
+
+    if (widget.matchingDetail != null) {
+      matchingDetail = widget.matchingDetail!;
+    }
+
+    // ถ้าไม่มีข้อมูลที่ส่งมา ให้ดึงข้อมูลจาก API
+    if (widget.matchingId != null &&
+        (widget.upperGarment == null ||
+            widget.lowerGarment == null ||
+            widget.matchingDetail == null ||
+            widget.matchingResult == null)) {
+      _loadMatchingDetails();
+    }
+  }
+
+  Future<void> _loadMatchingDetails() async {
+    try {
+      // ดึงข้อมูล matching จาก API
+      final matchingData =
+          await _garmentService.getMatchingById(widget.matchingId!);
+
+      setState(() {
+        matchingResult = matchingData['matching_result'] ?? 'Unknown Style';
+        matchingDetail = matchingData['matching_detail'] ?? '';
+
+        // ดึงข้อมูลเสื้อผ้าถ้ายังไม่มี
+        if (widget.upperGarment == null &&
+            matchingData['garment_top'] != null) {
+          _loadUpperGarment(matchingData['garment_top']);
+        }
+
+        if (widget.lowerGarment == null &&
+            matchingData['garment_bottom'] != null) {
+          _loadLowerGarment(matchingData['garment_bottom']);
+        }
+      });
+    } catch (e) {
+      print('Error loading matching details: $e');
+    }
+  }
+
+// เพิ่มเมธอดสำหรับโหลดข้อมูลเสื้อผ้าส่วนบน
+  Future<void> _loadUpperGarment(String garmentId) async {
+    try {
+      final garmentData = await _garmentService.getGarmentById(garmentId);
+      if (garmentData != null) {
+        setState(() {
+          upperGarment = garmentData;
+        });
+      }
+    } catch (e) {
+      print('Error loading upper garment: $e');
+    }
+  }
+
+  // เพิ่มเมธอดสำหรับโหลดข้อมูลเสื้อผ้าส่วนล่าง
+  Future<void> _loadLowerGarment(String garmentId) async {
+    try {
+      final garmentData = await _garmentService.getGarmentById(garmentId);
+      if (garmentData != null) {
+        setState(() {
+          lowerGarment = garmentData;
+        });
+      }
+    } catch (e) {
+      print('Error loading lower garment: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
