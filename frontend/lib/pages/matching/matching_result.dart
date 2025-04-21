@@ -51,6 +51,10 @@ class _MatchingResultState extends State<MatchingResult> {
   void initState() {
     super.initState();
 
+    // กำหนดค่าเริ่มต้นจาก widget
+    upperGarment = widget.upperGarment;
+    lowerGarment = widget.lowerGarment;
+
     // ใช้ค่าที่ส่งมาถ้ามี
     if (widget.matchingResult != null) {
       matchingResult = widget.matchingResult!;
@@ -60,6 +64,9 @@ class _MatchingResultState extends State<MatchingResult> {
       matchingDetail = widget.matchingDetail!;
     }
 
+    // ตรวจสอบสถานะ favorite
+    _checkFavoriteStatus();
+
     // ถ้าไม่มีข้อมูลที่ส่งมา ให้ดึงข้อมูลจาก API
     if (widget.matchingId != null &&
         (widget.upperGarment == null ||
@@ -67,6 +74,21 @@ class _MatchingResultState extends State<MatchingResult> {
             widget.matchingDetail == null ||
             widget.matchingResult == null)) {
       _loadMatchingDetails();
+    }
+  }
+
+  // เพิ่มเมธอดสำหรับตรวจสอบสถานะ favorite
+  Future<void> _checkFavoriteStatus() async {
+    if (widget.matchingId != null) {
+      try {
+        final favorites = await _garmentService.getFavorites();
+        final isFav = favorites.any((fav) => fav['_id'] == widget.matchingId);
+        setState(() {
+          isFavorite = isFav;
+        });
+      } catch (e) {
+        print('Error checking favorite status: $e');
+      }
     }
   }
 
@@ -190,14 +212,26 @@ class _MatchingResultState extends State<MatchingResult> {
                     ),
                   SizedBox(height: 36),
                   StyleDescriptionCard(
-                    title: 'Vintage Style',
-                    description:
-                        'Bringing back or reinterpreting past fashion styles, such as flared jeans that were popular in the 60s and have become trendy again in the present day.', // ตรงนี้ต้องทำการดึงข้อมูล API คำอธิบายจาก database มา
+                    title: matchingResult,
+                    description: matchingDetail,
                     isFavorite: isFavorite,
-                    onFavoriteTap: () {
-                      setState(() {
-                        isFavorite = !isFavorite;
-                      });
+                    onFavoriteTap: () async {
+                      if (widget.matchingId != null) {
+                        bool success;
+                        if (isFavorite) {
+                          success = await _garmentService
+                              .removeFromFavorites(widget.matchingId!);
+                        } else {
+                          success = await _garmentService
+                              .addToFavorites(widget.matchingId!);
+                        }
+
+                        if (success) {
+                          setState(() {
+                            isFavorite = !isFavorite;
+                          });
+                        }
+                      }
                     },
                   ),
                   SizedBox(height: 24),

@@ -128,8 +128,10 @@ class MatchingModel(BaseModel):
     )
 
 # เพิ่มโมเดลสำหรับการอัปเดตสถานะ favorite
-class FavoriteUpdateModel(BaseModel):
-    is_favorite: bool
+class FavoriteModel(BaseModel):
+    matching_id: str
+    user_id: str
+    is_favorite: Optional[bool] = True
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,

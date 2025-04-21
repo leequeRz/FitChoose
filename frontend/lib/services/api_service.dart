@@ -311,4 +311,69 @@ class ApiService {
       rethrow;
     }
   }
+
+  // เพิ่มฟังก์ชันสำหรับเพิ่ม favorite
+  Future<Map<String, dynamic>> addFavorite(
+      String matchingId, String userId) async {
+    try {
+      print('Adding favorite for matching: $matchingId, user: $userId');
+      final response = await http.post(
+        Uri.parse('$baseUrl/favorites/add'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'matching_id': matchingId, 'user_id': userId}),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to add favorite: ${response.body}');
+      }
+    } catch (e) {
+      print('Error adding favorite: $e');
+      rethrow;
+    }
+  }
+
+  // เพิ่มฟังก์ชันสำหรับลบ favorite
+  Future<Map<String, dynamic>> removeFavorite(
+      String matchingId, String userId) async {
+    try {
+      print('Removing favorite for matching: $matchingId, user: $userId');
+      final response = await http.delete(
+        Uri.parse(
+            '$baseUrl/favorites/remove?matching_id=$matchingId&user_id=$userId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to remove favorite: ${response.body}');
+      }
+    } catch (e) {
+      print('Error removing favorite: $e');
+      rethrow;
+    }
+  }
+
+  // เพิ่มฟังก์ชันสำหรับดึงรายการ favorites ของผู้ใช้
+  Future<List<Map<String, dynamic>>> getUserFavorites(String userId) async {
+    try {
+      print('Getting favorites for user: $userId');
+      final response = await http.get(
+        Uri.parse('$baseUrl/favorites/user/$userId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((item) => item as Map<String, dynamic>).toList();
+      } else {
+        throw Exception('Failed to get user favorites: ${response.body}');
+      }
+    } catch (e) {
+      print('Error getting user favorites: $e');
+      rethrow;
+    }
+  }
 }

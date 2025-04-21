@@ -1,7 +1,7 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Body
-from configuration import user_collection, garment_collection, matching_collection
+from configuration import user_collection, garment_collection, matching_collection,favorite_collection
 from database.schemas import all_users, user_data
-from database.models import UserModel, UserUpdateModel, Garment, MatchingModel, FavoriteUpdateModel
+from database.models import UserModel, UserUpdateModel, Garment, MatchingModel, FavoriteModel
 from bson.objectid import ObjectId
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
@@ -255,7 +255,7 @@ async def get_user_matchings(user_id: str):
 
 # เพิ่ม route สำหรับการอัปเดตสถานะ favorite
 @router.put("/matchings/{matching_id}/favorite")
-async def update_favorite(matching_id: str, data: FavoriteUpdateModel):
+async def update_favorite(matching_id: str, data: FavoriteModel):
     try:
         is_favorite = data.is_favorite  # เปลี่ยนจาก .get() เป็นการเข้าถึงโดยตรง
         
@@ -322,6 +322,92 @@ async def delete_matching(matching_id: str):
         return {"message": "Matching deleted successfully"}
     except Exception as e:
         print(f"Error deleting matching: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# เพิ่ม endpoint สำหรับเพิ่ม favorite
+@router.post("/favorites/add")
+async def add_favorite(favorite: FavoriteModel):
+    try:
+        # ตรวจสอบว่ามี favorite นี้อยู่แล้วหรือไม่
+        existing_favorite = favorite_collection.find_one({
+            "matching_id": favorite.matching_id,
+            "user_id": favorite.user_id
+        })
+        
+        if existing_favorite:
+            return {"message": "This matching is already in favorites"}
+        
+        # เพิ่ม favorite ใหม่
+        favorite_data = {
+            "matching_id": favorite.matching_id,
+            "user_id": favorite.user_id,
+            "created_at": datetime.now().isoformat()
+        }
+        
+        result = favorite_collection.insert_one(favorite_data)
+        
+        # อัปเดตสถานะ is_favorite ใน matching_collection
+        matching_collection.update_one(
+            {"_id": ObjectId(favorite.matching_id)},
+            {"$set": {"is_favorite": True}}
+        )
+        
+        return {
+            "message": "Added to favorites successfully",
+            "favorite_id": str(result.inserted_id)
+        }
+    except Exception as e:
+        print(f"Error adding favorite: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# เพิ่ม endpoint สำหรับลบ favorite
+@router.delete("/favorites/remove")
+async def remove_favorite(matching_id: str, user_id: str):
+    try:
+        # ลบ favorite
+        result = favorite_collection.delete_one({
+            "matching_id": matching_id,
+            "user_id": user_id
+        })
+        
+        if result.deleted_count == 0:
+            return {"message": "Favorite not found"}
+        
+        # อัปเดตสถานะ is_favorite ใน matching_collection
+        matching_collection.update_one(
+            {"_id": ObjectId(matching_id)},
+            {"$set": {"is_favorite": False}}
+        )
+        
+        return {"message": "Removed from favorites successfully"}
+    except Exception as e:
+        print(f"Error removing favorite: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# เพิ่ม endpoint สำหรับดึงรายการ favorites ของผู้ใช้
+@router.get("/favorites/user/{user_id}")
+async def get_user_favorites(user_id: str):
+    try:
+        # ดึงรายการ favorite ของผู้ใช้
+        favorites = list(favorite_collection.find({"user_id": user_id}))
+        
+        # แปลง ObjectId เป็น string
+        for favorite in favorites:
+            favorite["_id"] = str(favorite["_id"])
+        
+        # ดึงข้อมูล matching ที่เป็น favorite
+        favorite_matchings = []
+        for favorite in favorites:
+            matching_id = favorite["matching_id"]
+            matching = matching_collection.find_one({"_id": ObjectId(matching_id)})
+            
+            if matching:
+                matching["_id"] = str(matching["_id"])
+                favorite_matchings.append(matching)
+        
+        return favorite_matchings
+    except Exception as e:
+        print(f"Error getting user favorites: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # เพิ่ม CORS middleware ให้ถูกต้อง

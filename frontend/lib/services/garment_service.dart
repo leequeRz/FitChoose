@@ -276,4 +276,51 @@ class GarmentService {
       rethrow;
     }
   }
+
+  // เพิ่มฟังก์ชันสำหรับเพิ่ม favorite
+  Future<bool> addToFavorites(String matchingId) async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) {
+        return false;
+      }
+
+      await _apiService.addFavorite(matchingId, userId);
+      return true;
+    } catch (e) {
+      print('Error adding to favorites: $e');
+      return false;
+    }
+  }
+
+  // เพิ่มฟังก์ชันสำหรับลบ favorite
+  Future<bool> removeFromFavorites(String matchingId) async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) {
+        return false;
+      }
+
+      await _apiService.removeFavorite(matchingId, userId);
+      return true;
+    } catch (e) {
+      print('Error removing from favorites: $e');
+      return false;
+    }
+  }
+
+  // เพิ่มฟังก์ชันสำหรับดึงรายการ favorites
+  Future<List<Map<String, dynamic>>> getFavorites() async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) {
+        return [];
+      }
+
+      return await _apiService.getUserFavorites(userId);
+    } catch (e) {
+      print('Error getting favorites: $e');
+      return [];
+    }
+  }
 }
