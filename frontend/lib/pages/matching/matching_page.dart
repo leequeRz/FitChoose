@@ -201,7 +201,11 @@ class _MatchingPageState extends State<MatchingPage> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Select Lower Garment'),
+        title: const Text(
+          'Select Lower Garment',
+          style:
+              TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF9B7EBD)),
+        ),
         content: SizedBox(
           width: double.maxFinite,
           height: 300,
@@ -223,16 +227,21 @@ class _MatchingPageState extends State<MatchingPage> {
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: const Color(0xFF9B7EBD),
+                        width: 2), // เปลี่ยนสีขอบเป็นสีม่วง
+                    borderRadius: BorderRadius.circular(12), // เพิ่มขอบมน
                   ),
-                  child: Image.network(
-                    garment['garment_image'] ?? '',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Icon(
-                      Icons.broken_image,
-                      size: 50,
-                      color: Colors.grey,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      garment['garment_image'] ?? '',
+                      fit: BoxFit.fill,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.broken_image,
+                        size: 50,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                 ),
@@ -257,7 +266,7 @@ class _MatchingPageState extends State<MatchingPage> {
       body: SafeArea(
         child: Padding(
           // ลดขนาด padding ด้านข้างลงเพื่อแก้ปัญหา overflow ด้านขวา
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,7 +282,7 @@ class _MatchingPageState extends State<MatchingPage> {
                         Text(
                           'Matching +',
                           style: TextStyle(
-                            fontSize: 28, // ลดจาก 32
+                            fontSize: 32, // ลดจาก 32
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF3B1E54),
                           ),
@@ -281,7 +290,7 @@ class _MatchingPageState extends State<MatchingPage> {
                         Text(
                           'Matching Your Outfits',
                           style: TextStyle(
-                            fontSize: 16, // ลดจาก 18
+                            fontSize: 18, // ลดจาก 18
                             color: Color(0xFF9B7EBD),
                           ),
                         ),

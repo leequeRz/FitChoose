@@ -32,7 +32,7 @@ class PictureSelect extends StatelessWidget {
         child: imageUrl.startsWith('http') || imageUrl.startsWith('https')
             ? Image.network(
                 imageUrl,
-                fit: BoxFit.cover,
+                fit: BoxFit.fill,
                 loadingBuilder: (context, child, loadingProgress) {
                   if (loadingProgress == null) return child;
                   return Center(
@@ -54,7 +54,7 @@ class PictureSelect extends StatelessWidget {
               )
             : Image.asset(
                 imageUrl,
-                fit: BoxFit.cover,
+                fit: BoxFit.fill,
               ),
       ),
     );

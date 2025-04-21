@@ -222,7 +222,7 @@ class _WardropePageState extends State<WardropePage> {
                             _showProfilePictureGuide();
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF9B7EBD),
+                            backgroundColor: const Color(0xFF9B7EBD),
                           ),
                           child: Text(
                             'Picture Guide',
@@ -234,7 +234,7 @@ class _WardropePageState extends State<WardropePage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     Expanded(
                       child: ListView(
                         children: [

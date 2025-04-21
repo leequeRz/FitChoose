@@ -209,7 +209,7 @@ class _HistoryMatchingPageState extends State<HistoryMatchingPage> {
                                               snapshot.data!['garment_image'],
                                               width: 80,
                                               height: 80,
-                                              fit: BoxFit.cover,
+                                              fit: BoxFit.fill,
                                               errorBuilder: (context, error,
                                                       stackTrace) =>
                                                   const Icon(
@@ -257,7 +257,7 @@ class _HistoryMatchingPageState extends State<HistoryMatchingPage> {
                                               snapshot.data!['garment_image'],
                                               width: 80,
                                               height: 80,
-                                              fit: BoxFit.cover,
+                                              fit: BoxFit.fill,
                                               errorBuilder: (context, error,
                                                       stackTrace) =>
                                                   const Icon(

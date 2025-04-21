@@ -220,41 +220,58 @@ class _VirtualTryOnPageState extends State<VirtualTryOnPage>
                   ),
                 ),
                 SizedBox(height: 24),
-                // แทนที่ Expanded ด้วย Container ที่มีความสูงคงที่
-                Container(
-                  height: 300, // กำหนดความสูงที่เหมาะสม
-                  child: isLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(
-                              color: Color(0xFF9B7EBD)))
-                      : clothingItems[selectedCategory]!.isEmpty
-                          ? Center(
-                              child: Text(
-                                'No ${selectedCategory} items found',
-                                style: TextStyle(
-                                  color: Color(0xFF9B7EBD),
-                                  fontSize: 16,
+                // เปล่าจาก Container ที่มี GridView เป็น Column ที่มี Text และ ListView แนวนอน
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      selectedCategory,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF3B1E54),
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    Container(
+                      height: 180, // ปรับความสูงตามความเหมาะสม
+                      child: isLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                  color: Color(0xFF9B7EBD)))
+                          : clothingItems[selectedCategory]!.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    'No ${selectedCategory} items found',
+                                    style: TextStyle(
+                                      color: Color(0xFF9B7EBD),
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount:
+                                      clothingItems[selectedCategory]?.length ??
+                                          0,
+                                  itemBuilder: (context, index) {
+                                    final garment =
+                                        clothingItems[selectedCategory]![index];
+                                    return Padding(
+                                      padding:
+                                          const EdgeInsets.only(right: 16.0),
+                                      child: ClothingItemCard(
+                                        imageUrl: garment['garment_image'],
+                                        width:
+                                            150, // กำหนดความกว้างของแต่ละรายการ
+                                        height:
+                                            180, // กำหนดความสูงของแต่ละรายการ
+                                      ),
+                                    );
+                                  },
                                 ),
-                              ),
-                            )
-                          : GridView.builder(
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 16,
-                                childAspectRatio: 1,
-                              ),
-                              itemCount:
-                                  clothingItems[selectedCategory]?.length ?? 0,
-                              itemBuilder: (context, index) {
-                                final garment =
-                                    clothingItems[selectedCategory]![index];
-                                return ClothingItemCard(
-                                  imageUrl: garment['garment_image'],
-                                );
-                              },
-                            ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -302,20 +319,26 @@ class CategoryButton extends StatelessWidget {
   }
 }
 
-// Clothing Item Card Widget - ปรับเพื่อรองรับ URL แทน asset path
+// Clothing Item Card Widget - ปรับเพื่อรองรับ URL แทน asset path และเพิ่มพารามิเตอร์ width, height
 class ClothingItemCard extends StatelessWidget {
   final String imageUrl;
   final VoidCallback? onDeleteTap;
+  final double width;
+  final double height;
 
   const ClothingItemCard({
     Key? key,
     required this.imageUrl,
     this.onDeleteTap,
+    this.width = double.infinity,
+    this.height = double.infinity,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: width,
+      height: height,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: const Color(0xFFF8F1FF),
@@ -331,11 +354,11 @@ class ClothingItemCard extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: SizedBox(
-                width: double.infinity, // ให้กว้างเต็มพื้นที่
-                height: double.infinity, // ให้สูงเต็มพื้นที่
+                width: double.infinity,
+                height: double.infinity,
                 child: Image.network(
                   imageUrl,
-                  fit: BoxFit.cover, // ใช้ cover เพื่อให้รูปเต็มพื้นที่
+                  fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => const Center(
                     child: Icon(
                       Icons.broken_image,

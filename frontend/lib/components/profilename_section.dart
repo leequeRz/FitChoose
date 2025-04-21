@@ -21,7 +21,7 @@ class ProfileNameSection extends StatelessWidget {
             child: Text(
               name,
               style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF3B1E54)),
             ),
