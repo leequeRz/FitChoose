@@ -120,7 +120,11 @@ class _MatchingPageState extends State<MatchingPage> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Select Upper Garment'),
+        title: const Text(
+          'Select Upper Garment',
+          style:
+              TextStyle(color: Color(0xFF9B7EBD), fontWeight: FontWeight.bold),
+        ),
         content: SizedBox(
           width: double.maxFinite,
           height: 300,
@@ -142,16 +146,21 @@ class _MatchingPageState extends State<MatchingPage> {
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: Color(0xFF9B7EBD),
+                        width: 2), // เปลี่ยนสีขอบเป็นสีม่วง
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Image.network(
-                    garment['garment_image'] ?? '',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Icon(
-                      Icons.broken_image,
-                      size: 50,
-                      color: Colors.grey,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      garment['garment_image'] ?? '',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.broken_image,
+                        size: 50,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                 ),

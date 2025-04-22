@@ -323,4 +323,24 @@ class GarmentService {
       return [];
     }
   }
+
+  // เพิ่มฟังก์ชันลบ matching
+  Future<bool> deleteMatching(String matchingId) async {
+    try {
+      final baseUrl = _apiService.baseUrl;
+      final response = await http.delete(
+        Uri.parse('$baseUrl/matchings/$matchingId'),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Failed to delete matching: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Error deleting matching: $e');
+      return false;
+    }
+  }
 }
