@@ -157,7 +157,7 @@ class _WardropeDressState extends State<WardropeDress> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dress'),
-        backgroundColor: const Color(0xFFEBEAFF),
+        backgroundColor: const Color(0xFFF5F0FF),
         actions: [
           // เพิ่มปุ่มลบที่มุมขวาบน
           IconButton(

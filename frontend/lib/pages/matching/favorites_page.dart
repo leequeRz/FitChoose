@@ -140,6 +140,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                         }
                       },
                       child: Card(
+                        color: const Color(0xFFD4BEE4),
                         margin: const EdgeInsets.only(bottom: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -167,7 +168,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                                     formattedDate,
                                     style: const TextStyle(
                                       fontSize: 14,
-                                      color: Colors.grey,
+                                      color: Colors.black,
                                     ),
                                   ),
                                 ],
@@ -182,7 +183,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                                       matching['matching_detail'] ?? '',
                                       style: const TextStyle(
                                         fontSize: 14,
-                                        color: Color(0xFF666666),
+                                        color: Colors.black,
                                       ),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,

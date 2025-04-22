@@ -148,6 +148,7 @@ class _HistoryMatchingPageState extends State<HistoryMatchingPage> {
                         }
                       },
                       child: Card(
+                        color: const Color(0xFFD4BEE4),
                         margin: const EdgeInsets.only(bottom: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -175,7 +176,7 @@ class _HistoryMatchingPageState extends State<HistoryMatchingPage> {
                                     formattedDate,
                                     style: const TextStyle(
                                       fontSize: 14,
-                                      color: Colors.grey,
+                                      color: Colors.black,
                                     ),
                                   ),
                                 ],
@@ -226,7 +227,7 @@ class _HistoryMatchingPageState extends State<HistoryMatchingPage> {
                                           child: Center(
                                               child: Icon(
                                                   Icons.image_not_supported,
-                                                  color: Colors.grey)),
+                                                  color: Colors.black)),
                                         );
                                       },
                                     ),
