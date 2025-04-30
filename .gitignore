@@ -1,0 +1,35 @@
+# Virtual Environment
+env/
+venv/
+ENV/
+.env
+
+# Python
+weight.model
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ไฟล์อื่นๆ ที่ไม่ต้องการติดตาม
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
