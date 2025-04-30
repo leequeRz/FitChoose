@@ -51,9 +51,9 @@ class response(BaseModel):
     message: str
 
     
-async def yolo(a: A):
+async def yolo(image_url: str):
     await asyncio.sleep(5)
-    return task_id, a.text
+    return task_id, "processed"
 
 async def virtual_try(b: B):
     await asyncio.sleep(2)
@@ -82,10 +82,10 @@ async def startup_event():
 # เขียน endpoint รับข้อมูลจาก client(รูป)
 # เขียน BaseModel รับข้อมูลจาก client
 @app.get("/yolo")
-async def yolorequest(a: A):
+async def yolorequest(image_url: str):
     task_id = str(uuid4())
     # ใส่ task ลงใน queue
-    await app.task_queue.put(lambda: process_yolo(task_id, a.image_url, SERVER_URL))
+    await app.task_queue.put(lambda: process_yolo(task_id, image_url, SERVER_URL))
     start = time.time()
     
     # เพิ่ม logging เพื่อดูการทำงาน

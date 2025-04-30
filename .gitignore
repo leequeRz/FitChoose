@@ -5,6 +5,7 @@ ENV/
 .env
 
 # Python
+cropped_images
 weight.model
 __pycache__/
 *.py[cod]

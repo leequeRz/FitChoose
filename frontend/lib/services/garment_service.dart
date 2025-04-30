@@ -5,12 +5,96 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:fitchoose/services/api_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 
 class GarmentService {
   final ApiService _apiService = ApiService();
   final FirebaseStorage _storage = FirebaseStorage.instance;
+  final ImagePicker _imagePicker = ImagePicker();
 
-  // อัปโหลดรูปภาพเสื้อผ้าไปยัง Firebase Storage
+  // ฟังก์ชันใหม่สำหรับถ่ายรูปโดยตรงจากกล้อง
+  Future<File?> captureGarmentImage() async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 80, // ปรับคุณภาพรูปภาพเพื่อลดขนาดไฟล์
+      );
+
+      if (pickedFile == null) return null;
+
+      // แปลง XFile เป็น File
+      final File imageFile = File(pickedFile.path);
+
+      // บีบอัดรูปภาพเพื่อลดขนาดไฟล์
+      final compressedFile = await compressImage(imageFile);
+
+      return compressedFile;
+    } catch (e) {
+      print('Error capturing garment image: $e');
+      return null;
+    }
+  }
+
+  // ฟังก์ชันใหม่สำหรับเลือกรูปจากแกลเลอรี่
+  Future<File?> pickGarmentImageFromGallery() async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+
+      if (pickedFile == null) return null;
+
+      // แปลง XFile เป็น File
+      final File imageFile = File(pickedFile.path);
+
+      // บีบอัดรูปภาพเพื่อลดขนาดไฟล์
+      final compressedFile = await compressImage(imageFile);
+
+      return compressedFile;
+    } catch (e) {
+      print('Error picking garment image: $e');
+      return null;
+    }
+  }
+
+  // ฟังก์ชันสำหรับบีบอัดรูปภาพ
+  Future<File> compressImage(File file) async {
+    try {
+      // อ่านไฟล์รูปภาพ
+      final bytes = await file.readAsBytes();
+      final image = img.decodeImage(bytes);
+
+      if (image == null) return file;
+
+      // ปรับขนาดรูปภาพถ้าใหญ่เกินไป
+      img.Image resizedImage = image;
+      if (image.width > 1024 || image.height > 1024) {
+        resizedImage = img.copyResize(
+          image,
+          width: image.width > image.height ? 1024 : null,
+          height: image.height >= image.width ? 1024 : null,
+        );
+      }
+
+      // บีบอัดรูปภาพ
+      final compressedBytes = img.encodeJpg(resizedImage, quality: 80);
+
+      // สร้างไฟล์ชั่วคราวสำหรับเก็บรูปที่บีบอัดแล้ว
+      final tempDir = Directory.systemTemp;
+      final tempFile = File(
+          '${tempDir.path}/compressed_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      await tempFile.writeAsBytes(compressedBytes);
+
+      return tempFile;
+    } catch (e) {
+      print('Error compressing image: $e');
+      return file; // ถ้าเกิดข้อผิดพลาด ส่งคืนไฟล์เดิม
+    }
+  }
+
+  // ปรับปรุงฟังก์ชันอัปโหลดรูปภาพเสื้อผ้าไปยัง Firebase Storage
   Future<String?> uploadGarmentImage(File imageFile, String garmentType) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -26,7 +110,17 @@ class GarmentService {
       final storageRef = _storage.ref().child('garment_images/$fileName');
 
       // อัปโหลดไฟล์
-      final uploadTask = storageRef.putFile(imageFile);
+      final uploadTask = storageRef.putFile(
+        imageFile,
+        SettableMetadata(
+          contentType: 'image/jpeg',
+          customMetadata: {
+            'user_id': userId,
+            'garment_type': garmentType,
+            'uploaded_at': DateTime.now().toIso8601String(),
+          },
+        ),
+      );
 
       // รอจนกว่าการอัปโหลดจะเสร็จสิ้น
       final snapshot = await uploadTask;
@@ -341,6 +435,87 @@ class GarmentService {
     } catch (e) {
       print('Error deleting matching: $e');
       return false;
+    }
+  }
+
+  // ฟังก์ชันใหม่สำหรับถ่ายรูปและอัปโหลดในขั้นตอนเดียว
+  Future<Map<String, dynamic>> captureAndUploadGarment(
+      String garmentType) async {
+    try {
+      // ถ่ายรูป
+      final imageFile = await captureGarmentImage();
+      if (imageFile == null) {
+        return {'success': false, 'message': 'ไม่สามารถถ่ายรูปได้'};
+      }
+
+      // อัปโหลดรูปภาพ
+      final imageUrl = await uploadGarmentImage(imageFile, garmentType);
+      if (imageUrl == null) {
+        return {'success': false, 'message': 'ไม่สามารถอัปโหลดรูปภาพได้'};
+      }
+
+      // เพิ่มข้อมูลเสื้อผ้า
+      final success = await addGarment(
+        garmentType: garmentType,
+        garmentImage: imageUrl,
+      );
+
+      if (success) {
+        return {
+          'success': true,
+          'message': 'อัปโหลดเสื้อผ้าสำเร็จ',
+          'image_url': imageUrl,
+          'garment_type': garmentType,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'ไม่สามารถบันทึกข้อมูลเสื้อผ้าได้'
+        };
+      }
+    } catch (e) {
+      print('Error in captureAndUploadGarment: $e');
+      return {'success': false, 'message': 'เกิดข้อผิดพลาด: $e'};
+    }
+  }
+
+  // ฟังก์ชันใหม่สำหรับเลือกรูปจากแกลเลอรี่และอัปโหลด
+  Future<Map<String, dynamic>> pickAndUploadGarment(String garmentType) async {
+    try {
+      // เลือกรูปจากแกลเลอรี่
+      final imageFile = await pickGarmentImageFromGallery();
+      if (imageFile == null) {
+        return {'success': false, 'message': 'ไม่ได้เลือกรูปภาพ'};
+      }
+
+      // อัปโหลดรูปภาพ
+      final imageUrl = await uploadGarmentImage(imageFile, garmentType);
+      if (imageUrl == null) {
+        return {'success': false, 'message': 'ไม่สามารถอัปโหลดรูปภาพได้'};
+      }
+
+      // เพิ่มข้อมูลเสื้อผ้า
+      final success = await addGarment(
+        garmentType: garmentType,
+        garmentImage: imageUrl,
+      );
+
+      if (success) {
+        return {
+          'success': true,
+          'message': 'อัปโหลดเสื้อผ้าสำเร็จ',
+          'image_url': imageUrl,
+          'garment_type': garmentType,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'ไม่สามารถบันทึกข้อมูลเสื้อผ้าได้'
+        };
+      }
+    } catch (e) {
+      print('Error in pickAndUploadGarment: $e');
+      return {'success': false, 'message': 'เกิดข้อผิดพลาด: $e'};
     }
   }
 }

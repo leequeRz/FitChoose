@@ -3,7 +3,9 @@ import 'package:fitchoose/pages/wardrope/wardrope_dress.dart';
 import 'package:fitchoose/pages/wardrope/wardrope_lower.dart';
 import 'package:fitchoose/pages/wardrope/wardrope_upper.dart';
 import 'package:fitchoose/services/garment_service.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:fitchoose/services/api_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:fitchoose/widgets/profile_picture_guide_popup.dart';
 
@@ -16,7 +18,8 @@ class WardropePage extends StatefulWidget {
 
 class _WardropePageState extends State<WardropePage> {
   final GarmentService _garmentService = GarmentService();
-  final ImagePicker _picker = ImagePicker();
+  final ApiService _apiService = ApiService();
+  // final ImagePicker _picker = ImagePicker();
   bool isLoading = false;
 
   // จำนวนเสื้อผ้าในแต่ละหมวดหมู่
@@ -108,77 +111,27 @@ class _WardropePageState extends State<WardropePage> {
 
   // ถ่ายภาพและอัปโหลด
   Future<void> _takePhoto() async {
-    final garmentType = await _showGarmentTypeDialog();
-    if (garmentType == null) return;
-
-    final XFile? photo = await _picker.pickImage(
-      source: ImageSource.camera,
-      maxWidth: 1200,
-      maxHeight: 1200,
-      imageQuality: 85,
-    );
-
-    if (photo != null) {
-      await _uploadImage(File(photo.path), garmentType);
-    }
-  }
-
-  // เลือกรูปภาพและอัปโหลด
-  Future<void> _uploadPhoto() async {
-    final garmentType = await _showGarmentTypeDialog();
-    if (garmentType == null) return;
-
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1200,
-      maxHeight: 1200,
-      imageQuality: 85,
-    );
-
-    if (image != null) {
-      await _uploadImage(File(image.path), garmentType);
-    }
-  }
-
-  // อัปโหลดรูปภาพไปยัง Firebase Storage และบันทึกข้อมูลใน MongoDB
-  Future<void> _uploadImage(File imageFile, String garmentType) async {
     setState(() {
       isLoading = true;
     });
 
     try {
-      // อัปโหลดรูปภาพไปยัง Firebase Storage
-      final imageUrl =
-          await _garmentService.uploadGarmentImage(imageFile, garmentType);
-
-      if (imageUrl != null) {
-        // บันทึกข้อมูลใน MongoDB
-        final success = await _garmentService.addGarment(
-          garmentType: garmentType,
-          garmentImage: imageUrl,
-        );
-
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Garment added successfully')),
-          );
-
-          // โหลดจำนวนเสื้อผ้าใหม่
-          await _loadGarmentCounts();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to add garment')),
-          );
-        }
-      } else {
+      // ใช้ฟังก์ชันใหม่จาก GarmentService โดยไม่ต้องระบุประเภทเสื้อผ้า
+      // โมเดลจะตรวจจับประเภทเสื้อผ้าเอง
+      final imageFile = await _garmentService.captureGarmentImage();
+      if (imageFile == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to upload image')),
+          const SnackBar(content: Text('ไม่ได้ถ่ายรูป')),
         );
+        return;
       }
+
+      // อัปโหลดรูปภาพและให้โมเดลตรวจจับประเภทเสื้อผ้า
+      await _processAndUploadImage(imageFile);
     } catch (e) {
-      print('Error uploading image: $e');
+      print('เกิดข้อผิดพลาดในการถ่ายรูป: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(content: Text('เกิดข้อผิดพลาด: ${e.toString()}')),
       );
     } finally {
       setState(() {
@@ -186,6 +139,188 @@ class _WardropePageState extends State<WardropePage> {
       });
     }
   }
+
+  // เลือกรูปภาพและอัปโหลด
+  Future<void> _uploadPhoto() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // ใช้ฟังก์ชันใหม่จาก GarmentService โดยไม่ต้องระบุประเภทเสื้อผ้า
+      final imageFile = await _garmentService.pickGarmentImageFromGallery();
+      if (imageFile == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('ไม่ได้เลือกรูปภาพ')),
+        );
+        return;
+      }
+
+      // อัปโหลดรูปภาพและให้โมเดลตรวจจับประเภทเสื้อผ้า
+      await _processAndUploadImage(imageFile);
+    } catch (e) {
+      print('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('เกิดข้อผิดพลาด: ${e.toString()}')),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  // ฟังก์ชันใหม่สำหรับประมวลผลและอัปโหลดรูปภาพ
+  Future<void> _processAndUploadImage(File imageFile) async {
+    try {
+      // อัปโหลดรูปภาพไปยัง Firebase Storage
+      final imageUrl =
+          await _garmentService.uploadGarmentImage(imageFile, "auto");
+      if (imageUrl == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('ไม่สามารถอัปโหลดรูปภาพได้')),
+        );
+        return;
+      }
+
+      // ส่งรูปภาพไปให้ YOLO ตรวจจับประเภทเสื้อผ้า
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('กรุณาเข้าสู่ระบบก่อน')),
+        );
+        return;
+      }
+
+      // เรียกใช้ API YOLO เพื่อตรวจจับประเภทเสื้อผ้า
+      final yoloResult = await _apiService.processImageWithYOLO(imageUrl);
+
+      if (yoloResult != null &&
+          yoloResult['detections'] != null &&
+          yoloResult['detections'].isNotEmpty) {
+        // ดึงประเภทเสื้อผ้าจากผลลัพธ์ YOLO
+        final detections = yoloResult['detections'] as List;
+        String garmentType = "upper"; // ค่าเริ่มต้น
+
+        // ตรวจสอบประเภทเสื้อผ้าจากผลลัพธ์ YOLO
+        for (var detection in detections) {
+          final className = detection['class'].toString().toLowerCase();
+          if (className.contains('dress')) {
+            garmentType = "dress";
+            break;
+          } else if (className.contains('lower') ||
+              className.contains('pants') ||
+              className.contains('skirt')) {
+            garmentType = "lower";
+            break;
+          } else if (className.contains('upper') ||
+              className.contains('shirt') ||
+              className.contains('top')) {
+            garmentType = "upper";
+            break;
+          }
+        }
+
+        // เพิ่มข้อมูลเสื้อผ้าลงในฐานข้อมูล
+        final success = await _garmentService.addGarment(
+          garmentType: garmentType,
+          garmentImage: imageUrl,
+        );
+
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('เพิ่มเสื้อผ้าประเภท $garmentType สำเร็จ')),
+          );
+
+          // โหลดจำนวนเสื้อผ้าใหม่
+          await _loadGarmentCounts();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('ไม่สามารถบันทึกข้อมูลเสื้อผ้าได้')),
+          );
+        }
+      } else {
+        // ถ้าไม่สามารถตรวจจับประเภทเสื้อผ้าได้ ให้แสดง dialog ให้ผู้ใช้เลือกเอง
+        final garmentType = await _showGarmentTypeDialog();
+        if (garmentType == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('ไม่ได้เลือกประเภทเสื้อผ้า')),
+          );
+          return;
+        }
+
+        // เพิ่มข้อมูลเสื้อผ้าลงในฐานข้อมูล
+        final success = await _garmentService.addGarment(
+          garmentType: garmentType,
+          garmentImage: imageUrl,
+        );
+
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('เพิ่มเสื้อผ้าสำเร็จ')),
+          );
+
+          // โหลดจำนวนเสื้อผ้าใหม่
+          await _loadGarmentCounts();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('ไม่สามารถบันทึกข้อมูลเสื้อผ้าได้')),
+          );
+        }
+      }
+    } catch (e) {
+      print('เกิดข้อผิดพลาดในการประมวลผลรูปภาพ: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('เกิดข้อผิดพลาด: ${e.toString()}')),
+      );
+    }
+  }
+  // อัปโหลดรูปภาพไปยัง Firebase Storage และบันทึกข้อมูลใน MongoDB
+  // Future<void> _uploadImage(File imageFile, String garmentType) async {
+  //   setState(() {
+  //     isLoading = true;
+  //   });
+
+  //   try {
+  //     // อัปโหลดรูปภาพไปยัง Firebase Storage
+  //     final imageUrl =
+  //         await _garmentService.uploadGarmentImage(imageFile, garmentType);
+
+  //     if (imageUrl != null) {
+  //       // บันทึกข้อมูลใน MongoDB
+  //       final success = await _garmentService.addGarment(
+  //         garmentType: garmentType,
+  //         garmentImage: imageUrl,
+  //       );
+
+  //       if (success) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(content: Text('Garment added successfully')),
+  //         );
+
+  //         // โหลดจำนวนเสื้อผ้าใหม่
+  //         await _loadGarmentCounts();
+  //       } else {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(content: Text('Failed to add garment')),
+  //         );
+  //       }
+  //     } else {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text('Failed to upload image')),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     print('Error uploading image: $e');
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Error: ${e.toString()}')),
+  //     );
+  //   } finally {
+  //     setState(() {
+  //       isLoading = false;
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {

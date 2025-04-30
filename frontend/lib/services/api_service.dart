@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'dart:io' show Platform;
+import 'dart:io';
+import 'package:http_parser/http_parser.dart';
 
 class ApiService {
   // Base URL ของ API - เลือกตามสภาพแวดล้อมที่รัน
@@ -374,6 +375,77 @@ class ApiService {
     } catch (e) {
       print('Error getting user favorites: $e');
       rethrow;
+    }
+  }
+
+  // เพิ่มฟังก์ชันสำหรับอัปโหลดรูปภาพแบบ multipart
+  Future<Map<String, dynamic>> uploadGarmentImageMultipart(
+      File imageFile, String userId, String garmentType) async {
+    try {
+      // สร้าง multipart request
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/garments/upload-image'),
+      );
+
+      // เพิ่มข้อมูลไฟล์
+      final fileStream = http.ByteStream(imageFile.openRead());
+      final fileLength = await imageFile.length();
+
+      final multipartFile = http.MultipartFile(
+        'file',
+        fileStream,
+        fileLength,
+        filename: imageFile.path.split('/').last,
+        contentType: MediaType('image', 'jpeg'),
+      );
+
+      // เพิ่มข้อมูลอื่นๆ
+      request.files.add(multipartFile);
+      request.fields['user_id'] = userId;
+      request.fields['garment_type'] = garmentType;
+
+      // ส่งคำขอ
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print('API Response Status: ${response.statusCode}');
+      print('API Response Body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to upload image: ${response.body}');
+      }
+    } catch (e) {
+      print('Error uploading image: $e');
+      throw Exception('Failed to connect to server: $e');
+    }
+  }
+
+  // เพิ่มฟังก์ชันสำหรับประมวลผลรูปภาพด้วย YOLO
+  Future<Map<String, dynamic>?> processImageWithYOLO(String imageUrl) async {
+    try {
+      print('Processing image with YOLO: $imageUrl');
+
+      // เข้ารหัส URL เพื่อให้แน่ใจว่าส่งไปได้อย่างถูกต้อง
+      final encodedUrl = Uri.encodeComponent(imageUrl);
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/yolo?image_url=$encodedUrl'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print(
+            'Failed to process image with YOLO: ${response.statusCode} - ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Error processing image with YOLO: $e');
+      return null;
     }
   }
 }
