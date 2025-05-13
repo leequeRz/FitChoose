@@ -18,6 +18,24 @@ class VirtualTryOnResultPage extends StatefulWidget {
 }
 
 class _VirtualTryOnResultPageState extends State<VirtualTryOnResultPage> {
+  // เพิ่ม TransformationController เพื่อควบคุมการซูม
+  final TransformationController _transformationController = TransformationController();
+  
+  // ตัวแปรเก็บการเปลี่ยนแปลงล่าสุด
+  Matrix4? _recentTransform;
+  
+  @override
+  void dispose() {
+    // ทำลาย controller เมื่อไม่ได้ใช้งานแล้ว
+    _transformationController.dispose();
+    super.dispose();
+  }
+  
+  // ฟังก์ชันรีเซ็ตการซูมกลับไปที่ค่าเริ่มต้น
+  void _resetTransformation() {
+    _transformationController.value = Matrix4.identity();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -146,9 +164,32 @@ class _VirtualTryOnResultPageState extends State<VirtualTryOnResultPage> {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Image.file(
-                        widget.resultImage,
-                        fit: BoxFit.contain,
+                      child: GestureDetector(
+                        onDoubleTap: _resetTransformation, // รีเซ็ตเมื่อแตะสองครั้ง
+                        onLongPress: _resetTransformation, // รีเซ็ตเมื่อกดค้าง
+                        child: InteractiveViewer(
+                          transformationController: _transformationController,
+                          boundaryMargin: EdgeInsets.all(50),
+                          minScale: 0.1, // ซูมออกได้มากขึ้น
+                          maxScale: 10.0, // ซูมเข้าได้มากขึ้น
+                          clipBehavior: Clip.none, // ไม่ตัดส่วนที่เกินขอบเขต
+                          onInteractionEnd: (details) {
+                            // เมื่อปล่อยนิ้ว ให้เด้งกลับมาที่ขนาดเดิม
+                            Future.delayed(Duration(milliseconds: 300), () {
+                              setState(() {
+                                _resetTransformation();
+                              });
+                            });
+                          },
+                          onInteractionStart: (details) {
+                            // บันทึกการเปลี่ยนแปลงล่าสุด
+                            _recentTransform = _transformationController.value.clone();
+                          },
+                          child: Image.file(
+                            widget.resultImage,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                     ),
                   ),
