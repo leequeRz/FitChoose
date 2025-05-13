@@ -1,3 +1,4 @@
+import 'package:fitchoose/widgets/wardrobe_picture_guide_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:fitchoose/pages/wardrope/wardrope_dress.dart';
 import 'package:fitchoose/pages/wardrope/wardrope_lower.dart';
@@ -5,7 +6,6 @@ import 'package:fitchoose/pages/wardrope/wardrope_upper.dart';
 import 'package:fitchoose/services/garment_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:fitchoose/widgets/profile_picture_guide_popup.dart';
 
 class WardropePage extends StatefulWidget {
   const WardropePage({super.key});
@@ -30,17 +30,17 @@ class _WardropePageState extends State<WardropePage> {
     _loadGarmentCounts();
     // แสดง popup หลังจากที่ widget ถูกสร้างเสร็จ
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showProfilePictureGuide();
+      _showWardrobePictureGuide();
     });
   }
 
 // เพิ่มฟังก์ชันสำหรับแสดง popup
-  void _showProfilePictureGuide() {
+  void _showWardrobePictureGuide() {
     showDialog(
       context: context,
       barrierDismissible: true, // อนุญาตให้ปิดโดยการแตะพื้นหลัง
       builder: (BuildContext context) {
-        return ProfilePictureGuidePopup(
+        return WardrobePictureGuidePopup(
           onClose: () {
             Navigator.of(context).pop();
           },
@@ -219,7 +219,7 @@ class _WardropePageState extends State<WardropePage> {
                         ),
                         ElevatedButton(
                           onPressed: () {
-                            _showProfilePictureGuide();
+                            _showWardrobePictureGuide();
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF9B7EBD),
@@ -228,7 +228,7 @@ class _WardropePageState extends State<WardropePage> {
                             ),
                           ),
                           child: Text(
-                            'Picture Guide',
+                            'Wardrobe Guide',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -267,7 +267,18 @@ class _WardropePageState extends State<WardropePage> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 10),
+                    Center(
+                      child: const Text(
+                        'เลือกวิธีการอัปโหลด',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF3B1E54),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
