@@ -87,9 +87,48 @@ class _ProfilePageState extends State<ProfilePage> {
   // เพิ่มฟังก์ชันเลือกและอัปโหลดรูปภาพ
   Future<void> _pickAndUploadImage() async {
     try {
-      // เลือกรูปภาพจากแกลเลอรี่
+      // แสดงตัวเลือกระหว่างถ่ายรูปหรือเลือกจากแกลเลอรี่
+      showModalBottomSheet(
+        context: context,
+        builder: (BuildContext context) {
+          return SafeArea(
+            child: Wrap(
+              children: <Widget>[
+                ListTile(
+                  leading: const Icon(Icons.photo_camera),
+                  title: const Text('ถ่ายรูป'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _getAndUploadImage(ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('เลือกจากแกลเลอรี่'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _getAndUploadImage(ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      print('Error showing image source options: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('เกิดข้อผิดพลาด: ${e.toString()}')),
+      );
+    }
+  }
+
+  // เพิ่มฟังก์ชันใหม่สำหรับการรับและอัปโหลดรูปภาพ
+  Future<void> _getAndUploadImage(ImageSource source) async {
+    try {
+      // เลือกรูปภาพจากแหล่งที่กำหนด (กล้องหรือแกลเลอรี่)
       final XFile? pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         maxWidth: 800,
         maxHeight: 800,
         imageQuality: 85,
@@ -132,7 +171,7 @@ class _ProfilePageState extends State<ProfilePage> {
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile image updated successfully')),
+            const SnackBar(content: Text('อัปเดตรูปโปรไฟล์สำเร็จ')),
           );
         } else {
           setState(() {
@@ -147,8 +186,7 @@ class _ProfilePageState extends State<ProfilePage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Failed to update profile image: ${e.toString()}')),
+        SnackBar(content: Text('ไม่สามารถอัปเดตรูปโปรไฟล์: ${e.toString()}')),
       );
     }
   }
