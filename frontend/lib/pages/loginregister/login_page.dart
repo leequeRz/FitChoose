@@ -124,15 +124,31 @@ class _LoginPageState extends State<LoginPage> {
 
 // แก้ไขฟังก์ชัน Google Sign In ด้วย
   Future<void> _signInWithGoogle() async {
+    // แสดง loading circle
+    showDialog(
+      context: context,
+      builder: (context) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
+
     try {
       final userCredential = await AuthService().signInWithGoogle();
 
+      // ปิด loading circle
+      Navigator.pop(context);
+
       if (userCredential != null && userCredential.user != null) {
+        print("Google Sign In สำเร็จ: ${userCredential.user!.uid}");
         // ตรวจสอบว่ามีโปรไฟล์แล้วหรือยัง
         final hasProfile = await _checkUserProfile(userCredential.user!.uid);
+        print("มีโปรไฟล์หรือไม่: $hasProfile");
 
         if (!hasProfile) {
           // ถ้ายังไม่มีโปรไฟล์ ให้นำทางไปยังหน้าสร้างโปรไฟล์
+          print("ไม่พบโปรไฟล์ กำลังนำทางไปหน้าสร้างโปรไฟล์...");
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -144,16 +160,23 @@ class _LoginPageState extends State<LoginPage> {
           );
         } else {
           // ถ้ามีโปรไฟล์แล้ว นำทางไปยังหน้าหลัก
+          print("พบโปรไฟล์แล้ว กำลังนำทางไปหน้าหลัก...");
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => HomePage()),
             (route) => false,
           );
         }
+      } else {
+        print("Google Sign In ล้มเหลว: userCredential เป็น null");
+        showErrorSnackBar('การล็อกอินด้วย Google ล้มเหลว กรุณาลองใหม่อีกครั้ง');
       }
     } catch (e) {
+      // ปิด loading circle
+      Navigator.pop(context);
+
       print('Error signing in with Google: $e');
-      showErrorSnackBar('Failed to sign in with Google. Please try again.');
+      showErrorSnackBar('การล็อกอินด้วย Google ล้มเหลว: ${e.toString()}');
     }
   }
 
@@ -290,7 +313,7 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SquareTile(
-                        onTap: () => _signInWithGoogle,
+                        onTap: () => _signInWithGoogle(),
                         imagePath: 'assets/images/google.png'),
                   ],
                 ),

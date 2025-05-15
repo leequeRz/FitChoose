@@ -31,7 +31,7 @@ class WardrobePictureGuidePopup extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text(
-            'วิธีการอัปโหลดรูปเสื้อผ้าที่ดี',
+            'How to upload clothing photos effectively',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -42,7 +42,7 @@ class WardrobePictureGuidePopup extends StatelessWidget {
           _buildSingleImageExample(),
           const SizedBox(height: 16),
           const Text(
-            'คำแนะนำ: ถ่ายรูปเสื้อผ้าของคุณบนพื้นผิวเรียบ ให้เห็นรูปร่างชัดเจน ไม่มีเงาหรือแสงสะท้อน และถ่ายจากด้านหน้าเพื่อให้ระบบลองเสื้อผ้าเสมือนจริงทำงานได้อย่างมีประสิทธิภาพสูงสุด',
+            'Recommendation:\nTake photos of your clothing on a flat surface, making sure the shape is clearly visible without any shadows or glare. Capture the image from the front to ensure the virtual try-on system works as accurately as possible.',
             style: TextStyle(
               fontSize: 14,
               color: Colors.white,
@@ -60,7 +60,7 @@ class WardrobePictureGuidePopup extends StatelessWidget {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
             ),
-            child: const Text('ปิด'),
+            child: const Text('Close'),
           ),
         ],
       ),

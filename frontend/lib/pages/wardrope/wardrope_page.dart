@@ -6,6 +6,7 @@ import 'package:fitchoose/pages/wardrope/wardrope_upper.dart';
 import 'package:fitchoose/services/garment_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:fitchoose/widgets/app_guide_popup.dart';
 
 class WardropePage extends StatefulWidget {
   const WardropePage({super.key});
@@ -30,8 +31,24 @@ class _WardropePageState extends State<WardropePage> {
     _loadGarmentCounts();
     // แสดง popup หลังจากที่ widget ถูกสร้างเสร็จ
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showWardrobePictureGuide();
+      // _showWardrobePictureGuide();
+      _showAppGuide();
     });
+  }
+
+  // เพิ่มฟังก์ชันสำหรับแสดง App Guide popup
+  void _showAppGuide() {
+    showDialog(
+      context: context,
+      barrierDismissible: true, // อนุญาตให้ปิดโดยการแตะพื้นหลัง
+      builder: (BuildContext context) {
+        return AppGuidePopup(
+          onClose: () {
+            Navigator.of(context).pop();
+          },
+        );
+      },
+    );
   }
 
 // เพิ่มฟังก์ชันสำหรับแสดง popup

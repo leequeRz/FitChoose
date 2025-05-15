@@ -26,7 +26,7 @@ class BottomNavBar extends StatelessWidget {
           text: 'Wardrobe', // Corrected spelling
         ),
         GButton(
-          icon: Icons.view_in_ar,
+          icon: Icons.accessibility_new,
           text: 'Virtual Try-On',
         ),
         GButton(
